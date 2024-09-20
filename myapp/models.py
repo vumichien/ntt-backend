@@ -3,7 +3,9 @@ from django.db import models
 
 class MasterLog(models.Model):
     filename = models.CharField(max_length=100)
-    business = models.CharField(max_length=50, null=True, blank=True)  # Cho phép null và blank
+    business = models.CharField(
+        max_length=50, null=True, blank=True
+    )  # Cho phép null và blank
     operation_time = models.CharField(max_length=8)  # To store "HH:MM:SS"
     total_operations = models.IntegerField()
     note = models.CharField(max_length=100, null=True, blank=True)  # New field
@@ -13,7 +15,9 @@ class MasterLog(models.Model):
 
 
 class LogEntry(models.Model):
-    master_log = models.ForeignKey(MasterLog, on_delete=models.CASCADE, related_name='entries')
+    master_log = models.ForeignKey(
+        MasterLog, on_delete=models.CASCADE, related_name="entries"
+    )
     time = models.DateTimeField(null=True, blank=True)
     type = models.CharField(max_length=50, null=True, blank=True)
     user_name = models.CharField(max_length=255, null=True, blank=True)
@@ -48,6 +52,7 @@ class LogEntry(models.Model):
     plugin = models.CharField(max_length=255, null=True, blank=True)
     explanation = models.TextField(null=True, blank=True)
 
+
 class MasterErrorLog(models.Model):
     filename = models.CharField(max_length=100)
     business = models.CharField(max_length=50, null=True, blank=True)
@@ -57,9 +62,16 @@ class MasterErrorLog(models.Model):
 
     def __str__(self):
         return f"{self.filename} - {self.total_operations} operations"
-    
+
+
 class ErrorLog(models.Model):
-    master_error_log = models.ForeignKey(MasterErrorLog, on_delete=models.CASCADE, related_name='error_entries', null=True, blank=True)
+    master_error_log = models.ForeignKey(
+        MasterErrorLog,
+        on_delete=models.CASCADE,
+        related_name="error_entries",
+        null=True,
+        blank=True,
+    )
     time = models.DateTimeField()
     type = models.CharField(max_length=50, null=True, blank=True)
     user_name = models.CharField(max_length=255, null=True, blank=True)
@@ -84,8 +96,15 @@ class User(models.Model):
     def __str__(self):
         return self.user_name
 
+
 class ErrorStatistics(models.Model):
-    master_error_log = models.ForeignKey(MasterErrorLog, on_delete=models.CASCADE, related_name='error_statistics', null=True, blank=True)
+    master_error_log = models.ForeignKey(
+        MasterErrorLog,
+        on_delete=models.CASCADE,
+        related_name="error_statistics",
+        null=True,
+        blank=True,
+    )
     error_type = models.CharField(max_length=50)
     occurrence_count = models.IntegerField()
     actions_before_error = models.TextField()
@@ -94,4 +113,3 @@ class ErrorStatistics(models.Model):
 
     def __str__(self):
         return f"{self.error_type} - {self.occurrence_count} occurrences in {self.master_error_log.filename if self.master_error_log else 'Unknown'}"
-
