@@ -18,7 +18,6 @@ Including another URLconf
 from django.contrib import admin
 from django.conf import settings
 from django.urls import path, include
-from myapp.views import hello_world, import_csv
 from django.conf.urls.static import static
 
 urlpatterns = [
