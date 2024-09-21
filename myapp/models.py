@@ -3,12 +3,10 @@ from django.db import models
 
 class MasterLog(models.Model):
     filename = models.CharField(max_length=100)
-    business = models.CharField(
-        max_length=50, null=True, blank=True
-    )  # Cho phép null và blank
+    business = models.CharField(max_length=50, null=True, blank=True)
     operation_time = models.CharField(max_length=8)  # To store "HH:MM:SS"
     total_operations = models.IntegerField()
-    note = models.CharField(max_length=100, null=True, blank=True)  # New field
+    note = models.CharField(max_length=100, null=True, blank=True)
 
     def __str__(self):
         return f"{self.filename} - {self.total_operations} operations"
@@ -53,12 +51,20 @@ class LogEntry(models.Model):
     explanation = models.TextField(null=True, blank=True)
 
 
+class User(models.Model):
+    user_name = models.CharField(max_length=255, unique=True)
+
+    def __str__(self):
+        return self.user_name
+
+
 class MasterErrorLog(models.Model):
     filename = models.CharField(max_length=100)
     business = models.CharField(max_length=50, null=True, blank=True)
     operation_time = models.CharField(max_length=8)  # To store "HH:MM:SS"
     total_operations = models.IntegerField()
     note = models.CharField(max_length=100, null=True, blank=True)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
 
     def __str__(self):
         return f"{self.filename} - {self.total_operations} operations"
@@ -88,13 +94,6 @@ class ErrorLog(models.Model):
 
     def __str__(self):
         return f"Error Log - {self.time}"
-
-
-class User(models.Model):
-    user_name = models.CharField(max_length=255, unique=True)
-
-    def __str__(self):
-        return self.user_name
 
 
 class ErrorStatistics(models.Model):

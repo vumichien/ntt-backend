@@ -14,4 +14,22 @@ urlpatterns = [
         views.aggregate_error_statistics,
         name="aggregate_error_statistics",
     ),
+    path(
+        "error_type_statistics/",
+        views.error_type_statistics,
+        name="error_type_statistics",
+    ),
+    path(
+        "user_error_statistics/",
+        views.user_error_statistics,
+        name="user_error_statistics",
+    ),
+    path(
+        "user_error_statistics/<str:user_name>/",
+        views.user_error_statistics,
+        name="user_error_statistics_filtered",
+    ),
+    path("users/", views.get_users, name="get_users"),
+    path("error_details/<str:error_type>/", views.error_details, name="error_details"),
+    path("all_error_types/", views.all_error_types, name="all_error_types"),
 ]

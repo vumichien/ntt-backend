@@ -278,64 +278,6 @@ def hello_world(request):
     return Response({"message": "Hello, world!"})
 
 
-@api_view(["POST"])
-def import_csv(request):
-    try:
-        # Nhận tệp CSV từ request
-        csv_file = request.FILES["file"]
-
-        # Kiểm tra định dạng tệp
-        if not csv_file.name.endswith(".csv"):
-            return Response(
-                {"error": "Đây không phải là tệp CSV"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        # Đọc nội dung tệp CSV
-        data_set = csv_file.read().decode("UTF-8")
-        io_string = io.StringIO(data_set)
-        next(io_string)  # Bỏ qua tiêu đề của tệp CSV
-
-        # Xử lý từng dòng trong CSV
-        for row in csv.reader(io_string, delimiter=","):
-            # Kiểm tra nếu dòng rỗng hoặc không hợp lệ
-            if not row or not row[0]:
-                continue
-
-            try:
-                date = datetime.strptime(row[0], "%Y-%m-%d").date()
-            except ValueError:
-                continue  # Ignore invalid date format
-
-            a_count = int(row[1]) if row[1] else 0
-            b_count = int(row[2]) if row[2] else 0
-            c_count = int(row[3]) if row[3] else 0
-            # Update or create ClickData objects
-            ClickData.objects.update_or_create(
-                timestamp=date,
-                button="A",
-                defaults={"count": a_count},
-            )
-            ClickData.objects.update_or_create(
-                timestamp=date,
-                button="B",
-                defaults={"count": b_count},
-            )
-            ClickData.objects.update_or_create(
-                timestamp=date,
-                button="C",
-                defaults={"count": c_count},
-            )
-
-        return Response(
-            {"message": "CSVファイルからデータが正常にインポートされました"},
-            status=status.HTTP_200_OK,
-        )
-
-    except Exception as e:
-        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
 @api_view(["GET"])
 def get_log_info(request, log_id):
     try:
@@ -380,6 +322,12 @@ def import_error_log(request):
             operation_time = f"{int(hours):02d}:{int(minutes):02d}:{int(seconds):02d}"
             total_operations = len(df)
 
+            # Get or create user
+            user_name = df["user_name"].iloc[0] if "user_name" in df.columns else None
+            user = None
+            if user_name:
+                user, _ = User.objects.get_or_create(user_name=user_name)
+
             # Create or update MasterErrorLog
             master_error_log, created = MasterErrorLog.objects.update_or_create(
                 filename=xlsx_file,
@@ -388,6 +336,7 @@ def import_error_log(request):
                     "note": note,
                     "operation_time": operation_time,
                     "total_operations": total_operations,
+                    "user": user,
                 },
             )
 
@@ -463,7 +412,7 @@ def import_error_log(request):
                     error_type=error_type,
                     defaults={
                         "occurrence_count": stats["count"],
-                        "actions_before_error": "\n".join(stats["actions"]),
+                        "actions_before_error": ",".join(stats["actions"]),
                         "win_title": ", ".join(stats["win_title"]),
                     },
                 )
@@ -519,3 +468,81 @@ def aggregate_error_statistics(request):
 
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(["GET"])
+def error_type_statistics(request):
+    error_stats = (
+        ErrorStatistics.objects.values("error_type")
+        .annotate(total_occurrences=Sum("occurrence_count"))
+        .order_by("-total_occurrences")[:10]
+    )
+    return Response(error_stats)
+
+
+@api_view(["GET"])
+def user_error_statistics(request, user_name=None):
+    all_error_types = ErrorStatistics.objects.values_list(
+        "error_type", flat=True
+    ).distinct()
+
+    if user_name:
+        user_errors = (
+            ErrorStatistics.objects.filter(users__user_name=user_name)
+            .values("error_type")
+            .annotate(error_count=Sum("occurrence_count"))
+        )
+        user_error_dict = {
+            item["error_type"]: item["error_count"] for item in user_errors
+        }
+        result = [
+            {
+                "error_type": error_type,
+                "error_count": user_error_dict.get(error_type, 0),
+            }
+            for error_type in all_error_types
+        ]
+    else:
+        query = (
+            User.objects.annotate(error_count=Sum("errorstatistics__occurrence_count"))
+            .values("user_name", "error_count")
+            .order_by("-error_count")[:10]
+        )
+        result = [
+            {"user_name": item["user_name"], "error_count": item["error_count"] or 0}
+            for item in query
+        ]
+
+    return Response(result)
+
+
+@api_view(["GET"])
+def get_users(request):
+    users = User.objects.all().values("id", "user_name")
+    return Response(users)
+
+
+@api_view(["GET"])
+def all_error_types(request):
+    error_types = ErrorStatistics.objects.values_list(
+        "error_type", flat=True
+    ).distinct()
+    return Response(list(error_types))
+
+
+@api_view(["GET"])
+def error_details(request, error_type):
+    error_details = (
+        ErrorStatistics.objects.filter(error_type=error_type)
+        .annotate(
+            filename=F("master_error_log__filename"), user_name=F("users__user_name")
+        )
+        .values(
+            "filename",
+            "user_name",
+            "win_title",
+            "occurrence_count",
+            "actions_before_error",
+        )
+    )
+    return Response(list(error_details))
