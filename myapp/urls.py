@@ -32,5 +32,9 @@ urlpatterns = [
     path("users/", views.get_users, name="get_users"),
     path("error_details/<str:error_type>/", views.error_details, name="error_details"),
     path("all_error_types/", views.all_error_types, name="all_error_types"),
-    path("summarized_error_logs/", views.summarized_error_logs, name="summarized_error_logs"),
+    path(
+        "summarized_error_logs/",
+        views.summarized_error_logs,
+        name="summarized_error_logs",
+    ),
 ]
