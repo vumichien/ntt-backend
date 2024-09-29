@@ -15,11 +15,15 @@ from django.http import HttpResponse, HttpResponseNotFound
 from .models import MasterLog, LogEntry
 
 
-def index(request,):
+def index(
+    request,
+):
     return render(request, "processlog/process_log.html")
 
+
 def log_details_view(request, log_id):
-    return render(request, 'processlog/process_log_details.html', {'log_id': log_id})
+    return render(request, "processlog/process_log_details.html", {"log_id": log_id})
+
 
 @api_view(["POST"])
 def search_logs(request):

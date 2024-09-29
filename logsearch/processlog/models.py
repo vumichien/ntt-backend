@@ -1,5 +1,6 @@
 from django.db import models
 
+
 class MasterLog(models.Model):
     filename = models.CharField(max_length=100)
     business = models.CharField(max_length=50, null=True, blank=True)
@@ -9,6 +10,7 @@ class MasterLog(models.Model):
 
     def __str__(self):
         return f"{self.filename} - {self.total_operations} operations"
+
 
 class LogEntry(models.Model):
     master_log = models.ForeignKey(

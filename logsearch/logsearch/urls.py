@@ -25,7 +25,7 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("process-log/", include("processlog.urls")),
     path("error-log/", include("errorlog.urls")),
-    path('', RedirectView.as_view(url='/process-log/', permanent=False), name='index'),
+    path("", RedirectView.as_view(url="/process-log/", permanent=False), name="index"),
 ]
 
 if settings.DEBUG:

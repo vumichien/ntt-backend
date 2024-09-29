@@ -14,7 +14,8 @@ from .models import MasterErrorLog, ErrorLog, ErrorStatistics, User
 
 
 def error_log_visualization(request):
-    return render(request, 'errorlog/error_log.html')
+    return render(request, "errorlog/error_log.html")
+
 
 @api_view(["GET"])
 def import_error_log(request):

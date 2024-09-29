@@ -1,10 +1,12 @@
 from django.db import models
 
+
 class User(models.Model):
     user_name = models.CharField(max_length=255, unique=True)
 
     def __str__(self):
         return self.user_name
+
 
 class MasterErrorLog(models.Model):
     filename = models.CharField(max_length=100)
@@ -16,6 +18,7 @@ class MasterErrorLog(models.Model):
 
     def __str__(self):
         return f"{self.filename} - {self.total_operations} operations"
+
 
 class ErrorLog(models.Model):
     master_error_log = models.ForeignKey(
@@ -41,6 +44,7 @@ class ErrorLog(models.Model):
 
     def __str__(self):
         return f"Error Log - {self.time}"
+
 
 class ErrorStatistics(models.Model):
     master_error_log = models.ForeignKey(
