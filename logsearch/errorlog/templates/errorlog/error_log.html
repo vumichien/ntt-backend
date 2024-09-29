@@ -1,0 +1,61 @@
+{% extends 'processlog/layout.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'errorlog/css/error_log.css' %}">
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="chart-card">
+                <h4>エラー種別統計</h4>
+                <select id="errorTypeChartType" class="form-select mb-3">
+                    <option value="bar">棒グラフ</option>
+                    <option value="pie">円グラフ</option>
+                </select>
+                <div class="chart-container">
+                    <canvas id="errorTypeChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="chart-card">
+                <h4>ユーザーエラー統計</h4>
+                <select id="userSelect" class="form-select mb-3">
+                    <option value="">全てのユーザー</option>
+                </select>
+                <div class="chart-container">
+                    <canvas id="userErrorChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="chart-card">
+                <h4>エラー種別詳細統計</h4>
+                <table id="errorTable" class="table">
+                    <thead>
+                        <tr>
+                            <th>エラー種別</th>
+                            <th>発生件数</th>
+                            <th>エラー発生前の操作手順</th>
+                            <th>ユーザーID</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+                <div id="pagination" class="pagination"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{% static 'errorlog/js/error_log.js' %}"></script>
+{% endblock %}

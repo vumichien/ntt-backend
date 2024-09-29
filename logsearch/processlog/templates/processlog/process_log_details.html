@@ -1,0 +1,28 @@
+{% extends 'processlog/layout.html' %}
+{% load static %}
+
+{% block body %}
+<div class="log-details">
+    <button id="backButton" class="btn btn-secondary mb-3">戻る</button>
+    <div class="log-summary card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">ログ概要</h5>
+            <div class="summary-item">
+                <span class="summary-label">操作数:</span>
+                <span id="totalOperations" class="summary-value">Loading...</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-label">操作時間:</span>
+                <span id="operationTime" class="summary-value">Loading...</span>
+            </div>
+        </div>
+    </div>
+    <div id="timeline" class="timeline">
+        <!-- Timeline items will be dynamically inserted here -->
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'processlog/js/log_details.js' %}"></script>
+{% endblock %}

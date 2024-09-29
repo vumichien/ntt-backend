@@ -1,0 +1,49 @@
+.chart-container {
+    position: relative;
+    height: 300px;
+    margin-bottom: 20px;
+}
+
+.chart-card {
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.chart-card h4 {
+    color: #2A4A73;
+    margin-bottom: 15px;
+}
+
+.table th, .table td {
+    vertical-align: middle;
+}
+
+.table th {
+    white-space: nowrap;
+}
+
+.table td {
+    white-space: pre-wrap;
+}
+
+.pagination {
+    margin-top: 20px;
+    justify-content: center;
+}
+
+.pagination .page-item .page-link {
+    color: #007bff;
+}
+
+.pagination .page-item.active .page-link {
+    background-color: #007bff;
+    border-color: #007bff;
+    color: #fff;
+}
+
+.pagination .page-item.disabled .page-link {
+    color: #6c757d;
+}
