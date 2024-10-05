@@ -14,4 +14,6 @@ urlpatterns = [
         views.log_details_view,
         name="log_details_view",
     ),
+    path("get-questions/<int:log_id>/", views.get_questions, name="get_questions"),
+    path("generate-procedure/<int:log_id>/", views.generate_procedure, name="generate_procedure"),
 ]
