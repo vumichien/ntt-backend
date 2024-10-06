@@ -7,6 +7,18 @@ document.addEventListener("DOMContentLoaded", function () {
     e.preventDefault();
     const searchQuery = document.getElementById("searchInput").value;
 
+    // Clear the old 案件Form and question list before displaying new search results
+    const old案件Form = document.getElementById("案件Form");
+    if (old案件Form) {
+      old案件Form.remove(); // Remove the old 案件 form
+    }
+
+    const oldQuestionForm = document.getElementById("questionForm");
+    if (oldQuestionForm) {
+      oldQuestionForm.remove(); // Remove the old question form
+    }
+
+    // Proceed with the search
     fetch("/process-log/search-logs/", {
       method: "POST",
       headers: {
@@ -21,7 +33,7 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   function displaySearchResults(results) {
-    searchResults.innerHTML = "";
+    searchResults.innerHTML = ""; // Clear previous search results
     logDetails.style.display = "none";
 
     results.forEach((result) => {
