@@ -1,26 +1,305 @@
-/* Card spacing and customization */
-.card {
+/* Global app container styling */
+.app-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* Header */
+.app-header {
+  background-color: #2A4A73; /* Deep blue */
+  padding: 30px;
+  text-align: center;
   border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 30px;
+  color: #F8FAFC;
+  font-size: 2rem;
+  font-weight: bold;
+}
+
+/* Main content area styling */
+.app-main {
+  background-color: #F9FBFD;
+  border-radius: 8px;
+  padding: 30px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Search bar */
+.search-bar {
+  border: 2px solid #6B8CAE;
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 1rem;
+}
+
+.search-button {
+  padding: 12px 16px;
+  background-color: #D64550; /* Burnt Sienna Orange */
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: background-color 0.3s ease;
+}
+
+.search-button:hover {
+  background-color: #B83B45; /* Darker Sienna */
+}
+
+/* Card styling */
+.card {
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+  padding: 20px;
   margin-bottom: 20px;
 }
 
+.card-header {
+  padding: 12px 16px;
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+.card-body {
+  padding: 20px;
+}
+
+/* Thêm các styles mới này */
+.card-body p,
+.card-body div {
+  line-height: 1.4; /* Giảm khoảng cách giữa các dòng */
+  margin-bottom: 0.5rem; /* Giảm khoảng cách dưới mỗi đoạn */
+}
+
+.card-body h1,
+.card-body h2,
+.card-body h3,
+.card-body h4,
+.card-body h5,
+.card-body h6 {
+  margin-bottom: 0.75rem; /* Giảm khoảng cách dưới các tiêu đề */
+}
+
 .card-title {
-  font-size: 18px;
-  font-weight: bold;
-  color: #2C3E50;
+  font-size: 1.25rem;
+  margin-bottom: 15px; /* Giảm từ 20px xuống 15px */
 }
 
-.form-label {
-  font-weight: bold;
-  color: #34495E;
+/* Form input */
+.form-control {
+  border: 2px solid #6B8CAE;
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 20px;
+  font-size: 1rem;
 }
 
-.btn {
-  font-size: 16px;
+/* Buttons */
+.btn-success {
+  background-color: #28A745;
+  border: none;
+  font-size: 1rem;
+  padding: 12px;
+  border-radius: 8px;
+  transition: background-color 0.3s ease;
 }
 
-.mt-3, .mb-3 {
-  margin-top: 1rem;
-  margin-bottom: 1rem;
+.btn-success:hover {
+  background-color: #218838;
+}
+
+.btn-primary {
+  background-color: #D64550;
+  border: none;
+  font-size: 1rem;
+  padding: 12px;
+  border-radius: 8px;
+  transition: background-color 0.3s ease;
+}
+
+.btn-primary:hover {
+  background-color: #B83B45;
+}
+
+/* Results styling */
+.result-card {
+  border: none;
+  background-color: #F9FBFD;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+}
+
+.result-header {
+  background-color: #2A4A73;
+  color: white;
+  padding: 12px;
+  border-radius: 10px 10px 0 0;
+  font-size: 1.1rem;
+}
+
+.result-card .card-body {
+  padding: 16px;
+  flex-grow: 1;
+}
+
+.result-card .btn {
+  background-color: #D64550;
+  color: white;
+  border-radius: 0 0 10px 10px;
+}
+
+.result-card .btn:hover {
+  background-color: #B83B45;
+}
+
+.result-card .card-footer {
+  background-color: transparent;
+  border-top: none;
+  padding: 16px;
+}
+
+.result-card .select-button {
+  background-color: #D64550;
+  color: white;
+  border-radius: 8px;
+  padding: 8px 24px;
+  font-size: 1rem;
+}
+
+.result-card .select-button:hover {
+  background-color: #B83B45;
+}
+
+/* Question and Task Cards */
+#案件Card, #questionCard {
+  margin-top: 20px;
+  padding: 20px;
+  background-color: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+/* Timeline content for log details */
+.timeline-content {
+    margin-left: 40px;
+    background: #F8FAFC;
+    padding: 16px;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-width: 100%;
+    position: relative; /* Thêm vị trí tương đối */
+}
+
+/* Ensure the images are responsive and don't grow too large */
+.captured-image {
+    max-width: 100%; /* Responsive image width */
+    max-height: 300px; /* Limit the max height */
+    height: auto; /* Maintain aspect ratio */
+    width: auto; /* Maintain aspect ratio */
+    border-radius: 4px;
+    margin-bottom: 12px;
+    object-fit: contain; /* Ensure image fits within the container */
+}
+
+.timeline-item {
+    margin-bottom: 30px;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    padding-bottom: 30px; /* Thêm khoảng cách dưới mỗi item */
+}
+
+/* Tạo đường mũi tên nối giữa các timeline item */
+.timeline-item::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    width: 2px;
+    height: 30px; /* Chiều dài của mũi tên */
+    background: #D64550;
+}
+/* Ẩn mũi tên cho timeline item cuối cùng */
+.timeline-item:last-child::after,
+.timeline-item:last-child::before {
+    display: none;
+}
+
+/* Điều chỉnh vị trí của timeline content */
+.timeline-content {
+    margin-top: 20px; /* Tạo khoảng cách từ điểm tròn đến nội dung */
+    background: #F8FAFC;
+    padding: 16px;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-width: 100%;
+    position: relative;
+}
+
+/* Log summary styles */
+.log-summary {
+    background-color: #E3EBF5;
+    padding: 12px;
+    margin-bottom: 20px;
+    border-radius: 6px;
+}
+
+.summary-item {
+    margin-bottom: 8px;
+}
+
+.summary-label {
+    font-weight: 600;
+    color: #2A4A73;
+    margin-right: 8px;
+}
+
+.summary-value {
+    color: #6B8CAE;
+}
+  
+/* Text styles */
+.text-muted {
+  --bs-text-opacity: 1;
+  color: rgba(251, 252, 253, 0.75);
+}
+
+/* Navigation tabs styling */
+.nav-tabs {
+  border-bottom: 1px solid #dee2e6;
+}
+
+.nav-tabs .nav-item {
+  margin-bottom: -1px;
+}
+
+.nav-tabs .nav-link {
+  border: 1px solid transparent;
+  border-top-left-radius: 0.25rem;
+  border-top-right-radius: 0.25rem;
+  color: #6c757d;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.nav-tabs .nav-link:hover {
+  border-color: #e9ecef #e9ecef #dee2e6;
+  color: #495057;
+}
+
+.nav-tabs .nav-link.active {
+  color: #2A4A73;
+  background-color: #fff;
+  border-color: #dee2e6 #dee2e6 #fff;
+  font-weight: 700;
+  border-bottom: 3px solid #2A4A73;  /* Thêm đường gạch dưới đậm */
 }

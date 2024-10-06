@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const pathParts = window.location.pathname.split('/');
     const logId = pathParts[pathParts.length - 1];
 
-    // Lấy câu trả lời của người dùng từ localStorage
+    // get answers from localStorage
     const answers = JSON.parse(localStorage.getItem('procedureAnswers') || '{}');
 
     if (logId && answers) {
@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', function() {
         window.history.back();
     });
 
-    // Hàm gọi API và hiển thị thao tác
+    // function generate procedure
     function generateProcedure(logId, answers) {
     console.log(answers);
         fetch(`/process-log/generate-procedure/${logId}/`, {
@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .catch(error => console.error('Error:', error));
     }
 
-    // Hiển thị các thao tác và hình ảnh tương ứng
+    // show procedure
     function displayProcedure(steps) {
         const timeline = document.getElementById('timeline');
         timeline.innerHTML = '';

@@ -37,7 +37,7 @@ document.addEventListener("DOMContentLoaded", function () {
         <div class="card result-card h-100">
             <div class="card-header result-header">
                 <h5 class="card-title mb-0">${result.filename}</h5>
-                <small class="text-muted">${result.note}</small>
+                <small>${result.note}</small>
             </div>
             <div class="card-body">
                 <p class="card-text">操作時間: ${result.operation_time}</p>
@@ -46,8 +46,8 @@ document.addEventListener("DOMContentLoaded", function () {
                 <p class="card-text">手順の特徴: ${result.procedure_features || 'N/A'}</p>
                 <p class="card-text">データ特徴: ${result.data_features || 'N/A'}</p>
             </div>
-            <div class="card-footer">
-                <button class="btn btn-primary select-button w-100" data-log-id="${result.id}">選択</button>
+            <div class="card-footer d-flex justify-content-center">
+                <button class="btn btn-primary select-button w-50" data-log-id="${result.id}">選択</button>
             </div>
         </div>
       `;
@@ -86,7 +86,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const 案件Form = document.getElementById("案件Form");
     案件Form.innerHTML = `
       <input type="text" class="form-control" id="案件内容" placeholder="案件内容">
-      <button id="保存Button" class="btn btn-success mt-2">保存</button>
+      <button id="保存Button" class="btn btn-primary mt-2">保存</button>
     `;
 
     document.getElementById("保存Button").addEventListener("click", function () {
@@ -96,6 +96,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function save案件内容(selectedLogId) {
     const 案件内容 = document.getElementById("案件内容").value;
+    
+    const questionCard = document.getElementById("questionCard");
+    if (questionCard.style.display === "block") {
+      // 問題がすでに表示されている場合は何もしない
+      return;
+    }
 
     fetch(`/process-log/get-questions/${selectedLogId}/`)
       .then((response) => response.json())

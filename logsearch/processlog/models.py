@@ -8,10 +8,10 @@ class MasterLog(models.Model):
     total_operations = models.IntegerField()
     note = models.CharField(max_length=100, null=True, blank=True)
     question_file = models.FileField(
-        upload_to="data/process_logs/questions/", null=True, blank=True
+        upload_to="data/process_logs/questions/", max_length=255, null=True, blank=True
     )
     template_file = models.FileField(
-        upload_to="data/process_logs/templates/", null=True, blank=True
+        upload_to="data/process_logs/templates/", max_length=255, null=True, blank=True
     )
 
     def __str__(self):

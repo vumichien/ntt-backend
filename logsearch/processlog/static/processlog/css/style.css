@@ -66,9 +66,25 @@
   padding: 20px;
 }
 
+/* Thêm các styles mới này */
+.card-body p,
+.card-body div {
+  line-height: 1.4; /* Giảm khoảng cách giữa các dòng */
+  margin-bottom: 0.5rem; /* Giảm khoảng cách dưới mỗi đoạn */
+}
+
+.card-body h1,
+.card-body h2,
+.card-body h3,
+.card-body h4,
+.card-body h5,
+.card-body h6 {
+  margin-bottom: 0.75rem; /* Giảm khoảng cách dưới các tiêu đề */
+}
+
 .card-title {
   font-size: 1.25rem;
-  margin-bottom: 20px;
+  margin-bottom: 15px; /* Giảm từ 20px xuống 15px */
 }
 
 /* Form input */
@@ -95,7 +111,7 @@
 }
 
 .btn-primary {
-  background-color: #2A4A73;
+  background-color: #D64550;
   border: none;
   font-size: 1rem;
   padding: 12px;
@@ -104,7 +120,7 @@
 }
 
 .btn-primary:hover {
-  background-color: #223C5B;
+  background-color: #B83B45;
 }
 
 /* Results styling */
@@ -113,6 +129,8 @@
   background-color: #F9FBFD;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   border-radius: 10px;
+  display: flex;
+  flex-direction: column;
 }
 
 .result-header {
@@ -125,6 +143,7 @@
 
 .result-card .card-body {
   padding: 16px;
+  flex-grow: 1;
 }
 
 .result-card .btn {
@@ -134,6 +153,24 @@
 }
 
 .result-card .btn:hover {
+  background-color: #B83B45;
+}
+
+.result-card .card-footer {
+  background-color: transparent;
+  border-top: none;
+  padding: 16px;
+}
+
+.result-card .select-button {
+  background-color: #D64550;
+  color: white;
+  border-radius: 8px;
+  padding: 8px 24px;
+  font-size: 1rem;
+}
+
+.result-card .select-button:hover {
   background-color: #B83B45;
 }
 
@@ -155,7 +192,8 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    max-width: 100%; /* Ensure timeline content stays within the container */
+    max-width: 100%;
+    position: relative; /* Thêm vị trí tương đối */
 }
 
 /* Ensure the images are responsive and don't grow too large */
@@ -174,17 +212,51 @@
     position: relative;
     display: flex;
     justify-content: center;
+    padding-bottom: 30px; /* Thêm khoảng cách dưới mỗi item */
 }
 
-.timeline-content::before {
+/* Tạo đường mũi tên nối giữa các timeline item */
+.timeline-item::after {
     content: '';
     position: absolute;
-    left: 20px;
-    top: 20px;
-    width: 16px;
-    height: 16px;
+    left: 50%;
+    bottom: 0;
+    width: 2px;
+    height: 30px;
     background: #D64550;
-    border-radius: 50%;
+}
+
+/* Tạo phần đầu mũi tên */
+.timeline-item::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    width: 10px;
+    height: 10px;
+    border-left: 2px solid #D64550;
+    border-bottom: 2px solid #D64550;
+    transform: translateX(-50%) rotate(-45deg);
+}
+
+/* Ẩn mũi tên cho timeline item cuối cùng */
+.timeline-item:last-child::after,
+.timeline-item:last-child::before {
+    display: none;
+}
+
+/* Điều chỉnh vị trí của timeline content */
+.timeline-content {
+    margin-top: 20px; /* Tạo khoảng cách từ điểm tròn đến nội dung */
+    background: #F8FAFC;
+    padding: 16px;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-width: 100%;
+    position: relative;
 }
 
 /* Log summary styles */
@@ -207,4 +279,41 @@
 
 .summary-value {
     color: #6B8CAE;
+}
+  
+/* Text styles */
+.text-muted {
+  --bs-text-opacity: 1;
+  color: rgba(251, 252, 253, 0.75);
+}
+
+/* Navigation tabs styling */
+.nav-tabs {
+  border-bottom: 1px solid #dee2e6;
+}
+
+.nav-tabs .nav-item {
+  margin-bottom: -1px;
+}
+
+.nav-tabs .nav-link {
+  border: 1px solid transparent;
+  border-top-left-radius: 0.25rem;
+  border-top-right-radius: 0.25rem;
+  color: #6c757d;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.nav-tabs .nav-link:hover {
+  border-color: #e9ecef #e9ecef #dee2e6;
+  color: #495057;
+}
+
+.nav-tabs .nav-link.active {
+  color: #2A4A73;
+  background-color: #fff;
+  border-color: #dee2e6 #dee2e6 #fff;
+  font-weight: 700;
+  border-bottom: 3px solid #2A4A73;  /* Thêm đường gạch dưới đậm */
 }
