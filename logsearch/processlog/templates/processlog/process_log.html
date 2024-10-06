@@ -6,10 +6,10 @@
 <form id="searchForm" class="mb-4">
     <div class="row g-3 justify-content-center">
         <div class="col-md-6">
-            <input type="text" class="form-control" placeholder="やりたい作業" name="search_query" id="searchInput">
+            <input type="text" class="form-control search-bar" placeholder="やりたい作業を検索" name="search_query" id="searchInput">
         </div>
         <div class="col-md-2">
-            <button type="submit" class="btn btn-primary w-100">検索</button>
+            <button type="submit" class="btn btn-primary w-100 search-button">検索</button>
         </div>
     </div>
 </form>
@@ -19,16 +19,20 @@
 
 <!-- 案件 Form (in a card) -->
 <div id="案件Card" class="card mt-4" style="display: none;">
+    <div class="card-header bg-primary text-white">
+        <h5 class="card-title">案件の詳細</h5>
+    </div>
     <div class="card-body">
-        <h5 class="card-title">案件</h5>
         <div id="案件Form"></div> <!-- 案件 form will be dynamically inserted here -->
     </div>
 </div>
 
 <!-- Question Form (in a card) -->
 <div id="questionCard" class="card mt-4" style="display: none;">
-    <div class="card-body">
+    <div class="card-header bg-info text-white">
         <h5 class="card-title">操作項目について質問</h5>
+    </div>
+    <div class="card-body">
         <div id="questionForm"></div> <!-- Question form will be dynamically inserted here -->
     </div>
 </div>
