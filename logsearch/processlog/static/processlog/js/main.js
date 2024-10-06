@@ -2,17 +2,10 @@ document.addEventListener("DOMContentLoaded", function () {
   const searchForm = document.getElementById("searchForm");
   const searchResults = document.getElementById("searchResults");
   const logDetails = document.getElementById("logDetails");
-  const 案件Card = document.getElementById("案件Card"); // Card của 案件
-  const questionCard = document.getElementById("questionCard"); // Card cho câu hỏi
 
-  // Khi nhấn nút 検索 (Tìm kiếm), ẩn 案件 và questionForm
   searchForm.addEventListener("submit", function (e) {
     e.preventDefault();
     const searchQuery = document.getElementById("searchInput").value;
-
-    // Ẩn 案件 và các câu hỏi khi có kết quả tìm kiếm mới
-    案件Card.style.display = "none"; // Ẩn ô input 案件
-    questionCard.style.display = "none"; // Ẩn danh sách câu hỏi
 
     fetch("/process-log/search-logs/", {
       method: "POST",
@@ -28,8 +21,8 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   function displaySearchResults(results) {
-    searchResults.innerHTML = ""; // Xóa kết quả cũ
-    logDetails.style.display = "none"; // Ẩn log details nếu có
+    searchResults.innerHTML = "";
+    logDetails.style.display = "none";
 
     results.forEach((result) => {
       const resultCard = document.createElement("div");
@@ -69,7 +62,7 @@ document.addEventListener("DOMContentLoaded", function () {
     // Clear any existing question forms
     const questionForm = document.getElementById("questionForm");
     if (questionForm) {
-      questionForm.style.display = "none";  // Hide the previous question list
+      questionForm.remove();  // Remove the previous question list
     }
 
     // Re-enable all logs (remove opacity)
@@ -85,11 +78,27 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     });
 
-    案件Card.style.display = "block"; // Show the 案件 form when a log is selected
+    // Clear and show the 案件 form again
+    const 案件Form = document.getElementById("案件Form");
+    if (案件Form) {
+      案件Form.remove();  // Remove the old 案件 form
+    }
 
-    // Attach the event listener for the 案件 form
+    const new案件Form = document.createElement("div");
+    new案件Form.id = "案件Form";
+    new案件Form.innerHTML = `
+            <div class="mt-4">
+                <label for="案件内容" class="form-label">案件</label>
+                <input type="text" class="form-control" id="案件内容" placeholder="案件内容">
+                <button id="保存Button" class="btn btn-success mt-2">保存</button>
+            </div>
+        `;
+
+    searchResults.parentNode.insertBefore(new案件Form, searchResults.nextSibling);
+
+    // Attach the event listener for the new 案件 form
     document.getElementById("保存Button").addEventListener("click", function () {
-      save案件内容(selectedLogId);  // Save 案件内容 and fetch questions for the selected log
+      save案件内容(selectedLogId);  // Pass the selectedLogId to save the new log's 案件
     });
   }
 
@@ -98,13 +107,17 @@ document.addEventListener("DOMContentLoaded", function () {
 
     fetch(`/process-log/get-questions/${selectedLogId}/`)
       .then((response) => response.json())
-      .then((data) => displayQuestions(data, selectedLogId))
+      .then((data) => displayQuestions(data, selectedLogId))  // Pass selectedLogId to display the new list of questions
       .catch((error) => console.error("Error:", error));
   }
 
   function displayQuestions(questions, selectedLogId) {
-    const questionContainer = document.getElementById("questionContainer");
-    questionContainer.innerHTML = "";  // Clear previous questions
+    const questionForm = document.createElement("div");
+    questionForm.id = "questionForm";
+    questionForm.innerHTML = `<h4>操作項目について質問</h4>`;
+
+    const formRow = document.createElement("div");
+    formRow.className = "row g-3";
 
     questions.forEach((question, index) => {
       const col = document.createElement("div");
@@ -113,15 +126,22 @@ document.addEventListener("DOMContentLoaded", function () {
             <label for="question_${question.question_id}" class="form-label">${index + 1}. ${question.question_text}</label>
             <input type="text" class="form-control" id="question_${question.question_id}">
         `;
-      questionContainer.appendChild(col);
+      formRow.appendChild(col);
     });
 
-    // Show the question form
-    questionCard.style.display = "block";
+    questionForm.appendChild(formRow);
+
+    const generateButton = document.createElement("button");
+    generateButton.id = "generateButton";
+    generateButton.className = "btn btn-primary mt-3";
+    generateButton.textContent = "作業手順生成";
+    questionForm.appendChild(generateButton);
+
+    document.getElementById("案件Form").appendChild(questionForm);
 
     // Event listener for generating the procedure
-    document.getElementById("generateButton").addEventListener("click", function () {
-      generateProcedure(selectedLogId, questions);
+    generateButton.addEventListener("click", function () {
+      generateProcedure(selectedLogId, questions);  // Pass selectedLogId to generate the procedure
     });
   }
 
