@@ -96,7 +96,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function save案件内容(selectedLogId) {
     const 案件内容 = document.getElementById("案件内容").value;
-    
+
     const questionCard = document.getElementById("questionCard");
     if (questionCard.style.display === "block") {
       // 問題がすでに表示されている場合は何もしない
