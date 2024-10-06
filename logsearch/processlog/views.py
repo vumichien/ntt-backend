@@ -11,8 +11,9 @@ import csv
 import re
 from django.utils.dateparse import parse_datetime
 from django.shortcuts import render
-from django.http import HttpResponse, HttpResponseNotFound
-from .models import MasterLog, LogEntry
+from django.http import HttpResponse, HttpResponseNotFound, JsonResponse
+from collections import defaultdict
+from .models import MasterLog, LogEntry, MasterLogInfo
 
 
 def index(
@@ -27,34 +28,116 @@ def log_details_view(request, log_id):
 
 @api_view(["POST"])
 def search_logs(request):
-    business = request.data.get("business", "")
-    action = request.data.get("action", "")
+    search_query = request.data.get("search_query", "")
 
-    master_logs = MasterLog.objects.filter(Q(business__icontains=business)).distinct()
+    # Thực hiện tìm kiếm trong các trường phù hợp
+    master_logs = MasterLog.objects.filter(
+        Q(business__icontains=search_query) | Q(note__icontains=search_query)
+    ).distinct()
 
-    if action:
-        matching_log_entries = (
-            LogEntry.objects.filter(explanation__icontains=action)
-            .values("master_log_id")
-            .distinct()
-        )
+    # Có thể mở rộng tìm kiếm trong LogEntry nếu cần
+    matching_log_entries = (
+        LogEntry.objects.filter(Q(explanation__icontains=search_query))
+        .values("master_log_id")
+        .distinct()
+    )
 
-        master_logs = master_logs.filter(id__in=matching_log_entries)
+    master_logs = master_logs.union(
+        MasterLog.objects.filter(id__in=matching_log_entries)
+    )
 
     results = []
     for log in master_logs:
-        results.append(
-            {
-                "id": log.id,
-                "filename": log.filename,
-                "note": log.note,
-                "business": log.business,
-                "operation_time": log.operation_time,
-                "total_operations": log.total_operations,
-            }
-        )
+        try:
+            info = log.info  # Truy cập thông tin từ bảng MasterLogInfo
+            results.append(
+                {
+                    "id": log.id,
+                    "filename": log.filename,
+                    "note": log.note,
+                    "operation_time": log.operation_time,
+                    "total_operations": log.total_operations,
+                    "content": info.content,
+                    "procedure_features": info.procedure_features,
+                    "data_features": info.data_features,
+                }
+            )
+        except MasterLogInfo.DoesNotExist:
+            # Nếu không có thông tin bổ sung, bỏ qua hoặc trả giá trị mặc định
+            results.append(
+                {
+                    "id": log.id,
+                    "filename": log.filename,
+                    "note": log.note,
+                    "operation_time": log.operation_time,
+                    "total_operations": log.total_operations,
+                    "content": "N/A",
+                    "procedure_features": "N/A",
+                    "data_features": "N/A",
+                }
+            )
 
     return Response(results)
+
+
+@api_view(["GET"])
+def get_questions(request, log_id):
+    try:
+        master_log = MasterLog.objects.get(id=log_id)
+        questions = []
+        if master_log.question_file:
+            with open(
+                master_log.question_file.path, newline="", encoding="utf-8"
+            ) as csvfile:
+                reader = csv.DictReader(csvfile)
+                for row in reader:
+                    questions.append(
+                        {
+                            "question_id": row["question_id"],
+                            "question_text": row["question_text"],
+                        }
+                    )
+        return Response(questions)
+    except MasterLog.DoesNotExist:
+        return Response({"error": "Log not found"}, status=404)
+
+
+@api_view(["POST"])
+def generate_procedure(request, log_id):
+    try:
+        master_log = MasterLog.objects.get(id=log_id)
+        answers = request.data.get("answers", {})
+        steps = []
+
+        if master_log.template_file:
+            with open(
+                master_log.template_file.path, newline="", encoding="utf-8"
+            ) as csvfile:
+                reader = csv.DictReader(csvfile)
+                for row in reader:
+                    description = row["description"]
+                    input_id = row.get("input_id")  # Kiểm tra input_id
+                    print(f"Before replacement: {description}")
+
+                    # Chỉ thay thế nếu có input_id trong câu hỏi và trong câu trả lời
+                    if input_id and str(input_id) in answers:
+                        description = description.replace(
+                            f"{{{input_id}}}", answers[str(input_id)]
+                        )
+
+                    print(f"After replacement: {description}")
+
+                    steps.append(
+                        {
+                            "step_id": row["step_id"],
+                            "description": description,
+                            "capimg": row["capimg"],  # Thêm hình ảnh từ template
+                        }
+                    )
+
+        return Response(steps)
+    except MasterLog.DoesNotExist:
+        return Response({"error": "Log not found"}, status=404)
 
 
 @api_view(["GET"])
@@ -138,6 +221,18 @@ def import_process_log(request):
 
         total_operations = len(rows)
 
+        # Tìm kiếm file question và template tương ứng
+        question_file = os.path.join(
+            log_folder, "questions", f"{filename}_question.csv"
+        )
+        template_file = os.path.join(
+            log_folder, "templates", f"{filename}_template.csv"
+        )
+
+        # Kiểm tra nếu file question và template tồn tại
+        question_file_path = question_file if os.path.exists(question_file) else None
+        template_file_path = template_file if os.path.exists(template_file) else None
+
         master_log, created = MasterLog.objects.update_or_create(
             filename=filename,
             defaults={
@@ -145,6 +240,8 @@ def import_process_log(request):
                 "operation_time": operation_time,
                 "total_operations": total_operations,
                 "note": note,
+                "question_file": question_file_path,
+                "template_file": template_file_path,
             },
         )
 
@@ -192,6 +289,29 @@ def import_process_log(request):
                 )
 
             LogEntry.objects.create(master_log=master_log, **entry_data)
+        # Nhập dữ liệu vào bảng MasterLogInfo từ file CSV chứa các thông tin bổ sung
+    info_file = os.path.join(log_folder, "log_info.csv")
+    with open(info_file, "r", encoding="utf-8") as file:
+        csv_reader = csv.DictReader(file)
+        for row in csv_reader:
+            filename = row["filename"]
+            content = row["content"]
+            procedure_features = row["procedure_features"]
+            data_features = row["data_features"]
+
+            try:
+                master_log = MasterLog.objects.get(filename=filename)
+                MasterLogInfo.objects.update_or_create(
+                    master_log=master_log,
+                    defaults={
+                        "content": content,
+                        "procedure_features": procedure_features,
+                        "data_features": data_features,
+                    },
+                )
+            except MasterLog.DoesNotExist:
+                # Nếu MasterLog không tồn tại, bỏ qua
+                continue
 
     return Response(
         {"message": "CSV files processed successfully"}, status=status.HTTP_200_OK
@@ -280,12 +400,36 @@ def get_log_entries(request, master_log_id):
 @api_view(["GET"])
 def get_log_info(request, log_id):
     try:
+        # Fetch the master log by ID
         master_log = MasterLog.objects.get(id=log_id)
-        return Response(
+
+        # Initialize variables
+        total_operations = 0
+        content_info = None
+
+        # Fetch the associated MasterLogInfo for content
+        try:
+            master_log_info = MasterLogInfo.objects.get(master_log=master_log)
+            content_info = master_log_info.content  # Get the content from MasterLogInfo
+        except MasterLogInfo.DoesNotExist:
+            content_info = "No content available"
+
+        # Count total operations based on template_file (instead of the original log)
+        if master_log.template_file:
+            with open(
+                master_log.template_file.path, newline="", encoding="utf-8"
+            ) as csvfile:
+                reader = csv.DictReader(csvfile)
+                total_operations = sum(
+                    1 for row in reader
+                )  # Count the number of rows (steps)
+
+        # Return the new log information with total_operations from template and content from MasterLogInfo
+        return JsonResponse(
             {
-                "total_operations": master_log.total_operations,
-                "operation_time": master_log.operation_time,
+                "total_operations": total_operations,
+                "operation_time": content_info,  # Show the content from MasterLogInfo as the operation_time
             }
         )
     except MasterLog.DoesNotExist:
-        return Response({"error": "Log not found"}, status=status.HTTP_404_NOT_FOUND)
+        return JsonResponse({"error": "Log not found"}, status=404)

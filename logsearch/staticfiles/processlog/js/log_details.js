@@ -1,12 +1,12 @@
 document.addEventListener('DOMContentLoaded', function() {
     const pathParts = window.location.pathname.split('/');
     const logId = pathParts[pathParts.length - 1];
-    const urlParams = new URLSearchParams(window.location.search);
-    const searchAction = urlParams.get('action');
-    console.log(logId, searchAction);
 
-    if (logId) {
-        fetchLogDetails(logId);
+    // get answers from localStorage
+    const answers = JSON.parse(localStorage.getItem('procedureAnswers') || '{}');
+
+    if (logId && answers) {
+        generateProcedure(logId, answers);  // Gọi API để lấy các thao tác từ template
         fetchLogInfo(logId);
     }
 
@@ -14,11 +14,40 @@ document.addEventListener('DOMContentLoaded', function() {
         window.history.back();
     });
 
-    function fetchLogDetails(logId) {
-        fetch(`/process-log/log-details/${logId}/`)
-            .then(response => response.json())
-            .then(data => displayLogDetails(data, searchAction))
-            .catch(error => console.error('Error:', error));
+    // function generate procedure
+    function generateProcedure(logId, answers) {
+    console.log(answers);
+        fetch(`/process-log/generate-procedure/${logId}/`, {
+            method: 'POST',
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": getCookie("csrftoken"),
+            },
+            body: JSON.stringify({ answers: answers })
+        })
+        .then(response => response.json())
+        .then(data => displayProcedure(data))
+        .catch(error => console.error('Error:', error));
+    }
+
+    // show procedure
+    function displayProcedure(steps) {
+        const timeline = document.getElementById('timeline');
+        timeline.innerHTML = '';
+
+        steps.forEach((step) => {
+            const timelineItem = document.createElement('div');
+            timelineItem.className = "timeline-item";
+            timelineItem.innerHTML = `
+                <div class="timeline-content">
+                    <img src="/media/${step.capimg}" alt="Captured" class="captured-image">
+                    <div class="text-content">
+                        <p class="explanation">${step.description}</p>
+                    </div>
+                </div>
+            `;
+            timeline.appendChild(timelineItem);
+        });
     }
 
     function fetchLogInfo(logId) {
@@ -31,25 +60,18 @@ document.addEventListener('DOMContentLoaded', function() {
             .catch(error => console.error('Error:', error));
     }
 
-    function displayLogDetails(details, searchAction) {
-        const timeline = document.getElementById('timeline');
-        timeline.innerHTML = '';
-
-        details.forEach((detail, index) => {
-            const isHighlighted = searchAction && detail.explanation &&
-                detail.explanation.toLowerCase().includes(searchAction.toLowerCase());
-            const timelineItem = document.createElement('div');
-            timelineItem.className = `timeline-item ${isHighlighted ? 'highlighted' : ''}`;
-            timelineItem.innerHTML = `
-                <div class="timeline-content">
-                    <img src="/media/${detail.capimg}" alt="Captured" class="captured-image">
-                    <div class="text-content">
-                        <p class="explanation ${isHighlighted ? 'highlighted-text' : ''}">${detail.explanation}</p>
-                        <p class="action-time">開始時間：${detail.action_time}</p>
-                    </div>
-                </div>
-            `;
-            timeline.appendChild(timelineItem);
-        });
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
     }
 });

@@ -2,22 +2,41 @@
 {% load static %}
 
 {% block body %}
+<!-- Search Form -->
 <form id="searchForm" class="mb-4">
-    <div class="row g-3">
-        <div class="col-md-3">
-            <input type="text" class="form-control" placeholder="業務" name="business" id="businessInput">
+    <div class="row g-3 justify-content-center">
+        <div class="col-md-6">
+            <input type="text" class="form-control search-bar" placeholder="やりたい作業を検索" name="search_query" id="searchInput">
         </div>
-        <div class="col-md-3">
-            <input type="text" class="form-control" placeholder="操作" name="action" id="actionInput">
-        </div>
-        <div class="col-md-1">
-            <button type="submit" class="btn btn-primary w-100">検索</button>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-primary w-100 search-button">検索</button>
         </div>
     </div>
 </form>
 
+<!-- Search Results -->
 <div id="searchResults" class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4"></div>
-<div id="logDetails" class="mt-4" style="display: none;"></div>
+
+<!-- 案件 Form (in a card) -->
+<div id="案件Card" class="card mt-4" style="display: none;">
+    <div class="card-header result-header text-white">
+        <h5 class="card-title">案件の詳細</h5>
+    </div>
+    <div class="card-body">
+        <div id="案件Form"></div> <!-- 案件 form will be dynamically inserted here -->
+    </div>
+</div>
+
+<!-- Question Form (in a card) -->
+<div id="questionCard" class="card mt-4" style="display: none;">
+    <div class="card-header result-header text-white">
+        <h5 class="card-title">操作項目について質問</h5>
+    </div>
+    <div class="card-body">
+        <div id="questionForm"></div> <!-- Question form will be dynamically inserted here -->
+    </div>
+</div>
+
 {% endblock %}
 
 {% block extra_js %}

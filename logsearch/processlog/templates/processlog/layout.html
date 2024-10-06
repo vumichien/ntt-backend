@@ -10,25 +10,25 @@
     {% block extra_css %}{% endblock %}
 </head>
 <body>
-    <div class="app-container">
-        <header class="app-header">
+    <div class="app-container container">
+        <header class="app-header mb-4">
             <h1>ログ検索システム</h1>
         </header>
 
         <nav class="app-nav mb-4">
-            <ul class="nav nav-tabs">
+            <ul class="nav nav-tabs justify-content-center">
                 <li class="nav-item">
-                    <a href="{% url 'process-log' %}" class="nav-link {% if request.resolver_match.url_name == 'index' %}active{% endif %}">ログ検索</a>
+                    <a href="{% url 'process-log' %}" class="nav-link {% if request.resolver_match.url_name == 'process-log' %}active{% endif %}">ログ検索</a>
                 </li>
                 <li class="nav-item">
-                    <a href="{% url 'error-log' %}" class="nav-link {% if request.resolver_match.url_name == 'error_logs' %}active{% endif %}">エラーログ</a>
+                    <a href="{% url 'error-log' %}" class="nav-link {% if request.resolver_match.url_name == 'error-log' %}active{% endif %}">エラーログ</a>
                 </li>
             </ul>
         </nav>
 
         <main class="app-main">
-                {% block body %}
-                {% endblock %}
+            {% block body %}
+            {% endblock %}
         </main>
     </div>
 
