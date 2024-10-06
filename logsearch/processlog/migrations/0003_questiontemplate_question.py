@@ -7,25 +7,56 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('processlog', '0002_masterloginfo'),
+        ("processlog", "0002_masterloginfo"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='QuestionTemplate',
+            name="QuestionTemplate",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('task_name', models.CharField(max_length=255)),
-                ('description', models.TextField(blank=True, null=True)),
-                ('master_log', models.OneToOneField(null=True, on_delete=django.db.models.deletion.CASCADE, related_name='question_template', to='processlog.masterlog')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("task_name", models.CharField(max_length=255)),
+                ("description", models.TextField(blank=True, null=True)),
+                (
+                    "master_log",
+                    models.OneToOneField(
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="question_template",
+                        to="processlog.masterlog",
+                    ),
+                ),
             ],
         ),
         migrations.CreateModel(
-            name='Question',
+            name="Question",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('text', models.CharField(max_length=255)),
-                ('template', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='questions', to='processlog.questiontemplate')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("text", models.CharField(max_length=255)),
+                (
+                    "template",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="questions",
+                        to="processlog.questiontemplate",
+                    ),
+                ),
             ],
         ),
     ]

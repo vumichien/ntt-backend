@@ -6,18 +6,25 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('processlog', '0004_remove_questiontemplate_master_log_delete_question_and_more'),
+        (
+            "processlog",
+            "0004_remove_questiontemplate_master_log_delete_question_and_more",
+        ),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='masterlog',
-            name='question_file',
-            field=models.FileField(blank=True, null=True, upload_to='data/process_logs/questions/'),
+            model_name="masterlog",
+            name="question_file",
+            field=models.FileField(
+                blank=True, null=True, upload_to="data/process_logs/questions/"
+            ),
         ),
         migrations.AddField(
-            model_name='masterlog',
-            name='template_file',
-            field=models.FileField(blank=True, null=True, upload_to='data/process_logs/templates/'),
+            model_name="masterlog",
+            name="template_file",
+            field=models.FileField(
+                blank=True, null=True, upload_to="data/process_logs/templates/"
+            ),
         ),
     ]

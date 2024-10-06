@@ -6,18 +6,18 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('processlog', '0003_questiontemplate_question'),
+        ("processlog", "0003_questiontemplate_question"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='questiontemplate',
-            name='master_log',
+            model_name="questiontemplate",
+            name="master_log",
         ),
         migrations.DeleteModel(
-            name='Question',
+            name="Question",
         ),
         migrations.DeleteModel(
-            name='QuestionTemplate',
+            name="QuestionTemplate",
         ),
     ]

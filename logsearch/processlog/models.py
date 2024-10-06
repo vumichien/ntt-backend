@@ -7,17 +7,28 @@ class MasterLog(models.Model):
     operation_time = models.CharField(max_length=8)  # To store "HH:MM:SS"
     total_operations = models.IntegerField()
     note = models.CharField(max_length=100, null=True, blank=True)
-    question_file = models.FileField(upload_to='data/process_logs/questions/', null=True, blank=True)
-    template_file = models.FileField(upload_to='data/process_logs/templates/', null=True, blank=True)
+    question_file = models.FileField(
+        upload_to="data/process_logs/questions/", null=True, blank=True
+    )
+    template_file = models.FileField(
+        upload_to="data/process_logs/templates/", null=True, blank=True
+    )
 
     def __str__(self):
         return f"{self.filename} - {self.total_operations} operations"
 
+
 class MasterLogInfo(models.Model):
-    master_log = models.OneToOneField(MasterLog, on_delete=models.CASCADE, related_name='info')
+    master_log = models.OneToOneField(
+        MasterLog, on_delete=models.CASCADE, related_name="info"
+    )
     content = models.CharField(max_length=255, null=True, blank=True)  # 内容
-    procedure_features = models.CharField(max_length=255, null=True, blank=True)  # 手順の特徴
-    data_features = models.CharField(max_length=255, null=True, blank=True)  # データ特徴
+    procedure_features = models.CharField(
+        max_length=255, null=True, blank=True
+    )  # 手順の特徴
+    data_features = models.CharField(
+        max_length=255, null=True, blank=True
+    )  # データ特徴
 
     def __str__(self):
         return f"Info for {self.master_log.filename}"
