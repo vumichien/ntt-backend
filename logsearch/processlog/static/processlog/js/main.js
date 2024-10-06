@@ -1,24 +1,19 @@
 document.addEventListener("DOMContentLoaded", function () {
   const searchForm = document.getElementById("searchForm");
   const searchResults = document.getElementById("searchResults");
-  const logDetails = document.getElementById("logDetails");
 
   searchForm.addEventListener("submit", function (e) {
     e.preventDefault();
     const searchQuery = document.getElementById("searchInput").value;
 
-    // Clear the old 案件Form and question list before displaying new search results
+    // Clear previous forms and results
     const old案件Form = document.getElementById("案件Form");
-    if (old案件Form) {
-      old案件Form.remove(); // Remove the old 案件 form
-    }
-
     const oldQuestionForm = document.getElementById("questionForm");
-    if (oldQuestionForm) {
-      oldQuestionForm.remove(); // Remove the old question form
-    }
+    if (old案件Form) old案件Form.innerHTML = "";
+    if (oldQuestionForm) oldQuestionForm.innerHTML = "";
+    document.getElementById("案件Card").style.display = "none";
+    document.getElementById("questionCard").style.display = "none";
 
-    // Proceed with the search
     fetch("/process-log/search-logs/", {
       method: "POST",
       headers: {
@@ -34,29 +29,28 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function displaySearchResults(results) {
     searchResults.innerHTML = ""; // Clear previous search results
-    logDetails.style.display = "none";
 
     results.forEach((result) => {
       const resultCard = document.createElement("div");
       resultCard.className = "col";
       resultCard.innerHTML = `
-                <div class="card result-card h-100">
-                    <div class="card-header result-header">
-                        <h5 class="card-title mb-0">${result.filename}</h5>
-                        <small class="text-muted">${result.note}</small>
-                    </div>
-                    <div class="card-body">
-                        <p class="card-text">操作時間: ${result.operation_time}</p>
-                        <p class="card-text">総操作数: ${result.total_operations}</p>
-                        <p class="card-text">内容: ${result.content || 'N/A'}</p>
-                        <p class="card-text">手順の特徴: ${result.procedure_features || 'N/A'}</p>
-                        <p class="card-text">データ特徴: ${result.data_features || 'N/A'}</p>
-                    </div>
-                    <div class="card-footer">
-                        <button class="btn btn-primary select-button w-100" data-log-id="${result.id}">選択</button>
-                    </div>
-                </div>
-            `;
+        <div class="card result-card h-100">
+            <div class="card-header result-header">
+                <h5 class="card-title mb-0">${result.filename}</h5>
+                <small class="text-muted">${result.note}</small>
+            </div>
+            <div class="card-body">
+                <p class="card-text">操作時間: ${result.operation_time}</p>
+                <p class="card-text">総操作数: ${result.total_operations}</p>
+                <p class="card-text">内容: ${result.content || 'N/A'}</p>
+                <p class="card-text">手順の特徴: ${result.procedure_features || 'N/A'}</p>
+                <p class="card-text">データ特徴: ${result.data_features || 'N/A'}</p>
+            </div>
+            <div class="card-footer">
+                <button class="btn btn-primary select-button w-100" data-log-id="${result.id}">選択</button>
+            </div>
+        </div>
+      `;
       searchResults.appendChild(resultCard);
     });
 
@@ -69,46 +63,32 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function selectLog(selectedLogId) {
-    console.log("Selected log ID:", selectedLogId);
-
     // Clear any existing question forms
     const questionForm = document.getElementById("questionForm");
-    if (questionForm) {
-      questionForm.remove();  // Remove the previous question list
-    }
+    if (questionForm) questionForm.innerHTML = "";
 
     // Re-enable all logs (remove opacity)
     document.querySelectorAll(".result-card").forEach((card) => {
-      card.style.opacity = "1";  // Restore opacity for all logs
+      card.style.opacity = "1"; // Restore opacity for all logs
     });
 
     // Dim all logs except the selected one
     document.querySelectorAll(".result-card").forEach((card) => {
       const button = card.querySelector(".select-button");
       if (button.getAttribute("data-log-id") !== selectedLogId) {
-        card.style.opacity = "0.5";  // Dim the logs that are not selected
+        card.style.opacity = "0.5"; // Dim the logs that are not selected
       }
     });
 
-    // Clear and show the 案件 form again
+    // Display and populate 案件 form
+    const 案件Card = document.getElementById("案件Card");
+    案件Card.style.display = "block";
     const 案件Form = document.getElementById("案件Form");
-    if (案件Form) {
-      案件Form.remove();  // Remove the old 案件 form
-    }
+    案件Form.innerHTML = `
+      <input type="text" class="form-control" id="案件内容" placeholder="案件内容">
+      <button id="保存Button" class="btn btn-success mt-2">保存</button>
+    `;
 
-    const new案件Form = document.createElement("div");
-    new案件Form.id = "案件Form";
-    new案件Form.innerHTML = `
-            <div class="mt-4">
-                <label for="案件内容" class="form-label">案件</label>
-                <input type="text" class="form-control" id="案件内容" placeholder="案件内容">
-                <button id="保存Button" class="btn btn-success mt-2">保存</button>
-            </div>
-        `;
-
-    searchResults.parentNode.insertBefore(new案件Form, searchResults.nextSibling);
-
-    // Attach the event listener for the new 案件 form
     document.getElementById("保存Button").addEventListener("click", function () {
       save案件内容(selectedLogId);  // Pass the selectedLogId to save the new log's 案件
     });
@@ -124,9 +104,9 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function displayQuestions(questions, selectedLogId) {
-    const questionForm = document.createElement("div");
-    questionForm.id = "questionForm";
-    questionForm.innerHTML = `<h4>操作項目について質問</h4>`;
+    const questionCard = document.getElementById("questionCard");
+    questionCard.style.display = "block";  // Show the card
+    const questionForm = document.getElementById("questionForm");
 
     const formRow = document.createElement("div");
     formRow.className = "row g-3";
@@ -135,9 +115,9 @@ document.addEventListener("DOMContentLoaded", function () {
       const col = document.createElement("div");
       col.className = "col-md-6";
       col.innerHTML = `
-            <label for="question_${question.question_id}" class="form-label">${index + 1}. ${question.question_text}</label>
-            <input type="text" class="form-control" id="question_${question.question_id}">
-        `;
+        <label for="question_${question.question_id}" class="form-label">${index + 1}. ${question.question_text}</label>
+        <input type="text" class="form-control" id="question_${question.question_id}">
+      `;
       formRow.appendChild(col);
     });
 
@@ -149,9 +129,6 @@ document.addEventListener("DOMContentLoaded", function () {
     generateButton.textContent = "作業手順生成";
     questionForm.appendChild(generateButton);
 
-    document.getElementById("案件Form").appendChild(questionForm);
-
-    // Event listener for generating the procedure
     generateButton.addEventListener("click", function () {
       generateProcedure(selectedLogId, questions);  // Pass selectedLogId to generate the procedure
     });
