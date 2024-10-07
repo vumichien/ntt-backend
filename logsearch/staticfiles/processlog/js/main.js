@@ -86,10 +86,10 @@ document.addEventListener("DOMContentLoaded", function () {
     const 案件Form = document.getElementById("案件Form");
     案件Form.innerHTML = `
       <input type="text" class="form-control" id="案件内容" placeholder="案件内容">
-      <button id="保存Button" class="btn btn-primary mt-2">保存</button>
+      <button id="AnalysisButton" class="btn btn-primary mt-2">分析</button>
     `;
 
-    document.getElementById("保存Button").addEventListener("click", function () {
+    document.getElementById("AnalysisButton").addEventListener("click", function () {
       save案件内容(selectedLogId);  // Pass the selectedLogId to save the new log's 案件
     });
   }
