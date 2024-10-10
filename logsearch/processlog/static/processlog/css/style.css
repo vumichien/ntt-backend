@@ -317,3 +317,26 @@
   font-weight: 700;
   border-bottom: 3px solid #2A4A73;  /* Thêm đường gạch dưới đậm */
 }
+
+.timeline-arrow {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.timeline-arrow .arrow {
+    font-size: 2rem;
+    color: #D64550;
+}
+
+.timeline-arrow .error-content {
+    margin-top: 10px;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+}
+
+.last-explanation {
+    color: red;
+    font-weight: bold;
+}

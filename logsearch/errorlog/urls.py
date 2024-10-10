@@ -36,4 +36,6 @@ urlpatterns = [
         views.error_log_visualization,
         name="error-log",
     ),
+    path("error-search/", views.error_search, name="error-search"),
+    path("search-flow/", views.search_error_flow, name="search-flow"),
 ]

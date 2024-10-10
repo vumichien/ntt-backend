@@ -20,8 +20,12 @@
                 <li class="nav-item">
                     <a href="{% url 'process-log' %}" class="nav-link {% if request.resolver_match.url_name == 'process-log' %}active{% endif %}">ログ検索</a>
                 </li>
-                <li class="nav-item">
-                    <a href="{% url 'error-log' %}" class="nav-link {% if request.resolver_match.url_name == 'error-log' %}active{% endif %}">エラーログ</a>
+                 <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#">エラーログ</a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="{% url 'error-log' %}">エラー統計</a></li>
+                        <li><a class="dropdown-item" href="{% url 'error-search' %}">エラー検索</a></li>
+                    </ul>
                 </li>
             </ul>
         </nav>

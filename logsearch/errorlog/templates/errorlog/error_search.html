@@ -1,0 +1,32 @@
+{% extends 'processlog/layout.html' %}
+{% load static %}
+
+{% block body %}
+<div class="container mt-4">
+    <form id="searchErrorForm" class="mb-4">
+        <div class="row g-3 justify-content-center">
+            <div class="col-md-4">
+                <input type="text" class="form-control" placeholder="ユーザーを検索" name="search_user" id="searchUser">
+            </div>
+            <div class="col-md-4">
+                <select class="form-control" id="errorTypeSelect">
+                    <option value="">エラー種別を選択</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">検索</button>
+            </div>
+        </div>
+    </form>
+    
+    <!-- Display results here -->
+    <div id="errorFlow" style="display:none;">
+        <div id="timeline" class="timeline"></div>
+        <button id="backButton" class="btn btn-secondary mt-3">戻る</button>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'errorlog/js/error_search.js' %}"></script>
+{% endblock %}

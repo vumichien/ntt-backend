@@ -222,9 +222,23 @@
     left: 50%;
     bottom: 0;
     width: 2px;
-    height: 30px; /* Chiều dài của mũi tên */
+    height: 30px;
     background: #D64550;
 }
+
+/* Tạo phần đầu mũi tên */
+.timeline-item::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    width: 10px;
+    height: 10px;
+    border-left: 2px solid #D64550;
+    border-bottom: 2px solid #D64550;
+    transform: translateX(-50%) rotate(-45deg);
+}
+
 /* Ẩn mũi tên cho timeline item cuối cùng */
 .timeline-item:last-child::after,
 .timeline-item:last-child::before {
@@ -302,4 +316,27 @@
   border-color: #dee2e6 #dee2e6 #fff;
   font-weight: 700;
   border-bottom: 3px solid #2A4A73;  /* Thêm đường gạch dưới đậm */
+}
+
+.timeline-arrow {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.timeline-arrow .arrow {
+    font-size: 2rem;
+    color: #D64550;
+}
+
+.timeline-arrow .error-content {
+    margin-top: 10px;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+}
+
+.last-explanation {
+    color: red;
+    font-weight: bold;
 }

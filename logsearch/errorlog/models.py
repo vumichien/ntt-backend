@@ -57,6 +57,7 @@ class ErrorStatistics(models.Model):
     error_type = models.CharField(max_length=50)
     occurrence_count = models.IntegerField()
     actions_before_error = models.TextField()
+    captured_images = models.TextField(null=True, blank=True)
     win_title = models.CharField(max_length=255, null=True, blank=True)
     users = models.ManyToManyField(User)
 
