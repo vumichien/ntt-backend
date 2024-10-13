@@ -1,0 +1,119 @@
+/* Container tổng */
+.chat-container {
+    max-width: 800px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    height: 80vh;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    background-color: #fff;
+}
+
+/* Khung hiển thị tin nhắn */
+.chat-output {
+    flex-grow: 1;
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background-color: #f7f7f7;
+}
+
+/* Tin nhắn của người dùng (căn phải) */
+.user-message {
+    align-self: flex-end;
+    background-color: #007BFF;
+    color: #fff;
+    padding: 10px 15px;
+    border-radius: 20px;
+    max-width: 60%;
+    word-wrap: break-word;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    font-size: 16px;
+}
+
+/* Tin nhắn của bot (căn trái) */
+.chatbot-message {
+    align-self: flex-start;
+    background-color: #E9ECEF;
+    color: #333;
+    padding: 10px 15px;
+    border-radius: 20px;
+    max-width: 60%;
+    word-wrap: break-word;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    font-size: 16px;
+}
+
+/* Phần nhập tin nhắn */
+.chat-input-container {
+    display: flex;
+    padding: 10px;
+    border-top: 1px solid #ddd;
+    background-color: #fff;
+}
+
+/* Input của người dùng */
+.chat-input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    resize: none; /* Ngăn người dùng tự thay đổi kích thước */
+    font-size: 16px;
+    line-height: 1.5;
+    min-height: 40px;
+    max-height: 200px; /* Giới hạn chiều cao tối đa */
+    overflow-y: auto;
+}
+
+
+/* Nút gửi mũi tên hình tròn */
+.chat-send-button {
+    margin-left: 10px;
+    padding: 10px;
+    background-color: #e0e0e0; /* Màu mờ khi chưa có input */
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    cursor: not-allowed;
+    font-size: 18px;
+    width: 45px;
+    height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.3s ease;
+}
+
+/* Khi nút hoạt động (có input), sẽ thay đổi màu */
+.chat-send-button.active {
+    background-color: #007BFF; /* Màu đậm khi có input */
+    cursor: pointer;
+}
+
+.chat-send-button i {
+    margin: 0;
+}
+
+/* Khi người dùng hover */
+.chat-send-button.active:hover {
+    background-color: #0056b3;
+}
+
+/* Đảm bảo chat-output không bị che mất */
+.chat-output::-webkit-scrollbar {
+    width: 8px;
+}
+
+.chat-output::-webkit-scrollbar-thumb {
+    background-color: #ccc;
+    border-radius: 10px;
+}
+
+.chat-output::-webkit-scrollbar-track {
+    background-color: #f7f7f7;
+}

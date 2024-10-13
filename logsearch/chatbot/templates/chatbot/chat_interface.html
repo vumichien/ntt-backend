@@ -1,0 +1,23 @@
+{% extends 'processlog/layout.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'chatbot/css/chatbot.css' %}">
+{% endblock %}
+
+{% block body %}
+<div id="chat-container" class="chat-container">
+    <div id="chat-output" class="chat-output"></div>
+    <div class="chat-input-container">
+        <textarea id="user-input" class="chat-input" rows="1" placeholder="チャットボットにメッセージを送信する"></textarea>
+        <button id="send-button" class="chat-send-button" disabled>
+            <i class="fas fa-paper-plane"></i>
+        </button>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'chatbot/js/chatbot.js' %}"></script>
+{% endblock %}
