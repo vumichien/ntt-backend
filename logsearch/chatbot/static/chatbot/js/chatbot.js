@@ -3,7 +3,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const userInput = document.getElementById('user-input');
     const sendButton = document.getElementById('send-button');
 
-    // Khi người dùng nhập vào ô input
     userInput.addEventListener('input', function() {
         adjustTextareaHeight(this);
         if (userInput.value.trim() !== '') {
@@ -15,22 +14,20 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Tự động điều chỉnh chiều cao của textarea
     function adjustTextareaHeight(textarea) {
         textarea.style.height = 'auto';
-        textarea.style.height = (textarea.scrollHeight) + 'px';  // Điều chỉnh chiều cao theo nội dung
+        textarea.style.height = (textarea.scrollHeight) + 'px';
     }
 
-    // Thêm xử lý khi nhấn phím Enter hoặc Shift + Enter
     userInput.addEventListener('keydown', function(event) {
         if (event.key === 'Enter' && !event.shiftKey) {
-            event.preventDefault();  // Ngăn việc Enter tạo dòng mới
-            sendMessage();  // Gọi hàm gửi tin nhắn
+            event.preventDefault();
+            sendMessage();
         }
     });
 
     sendButton.addEventListener('click', function() {
-        sendMessage();  // Gọi hàm gửi tin nhắn khi bấm nút gửi
+        sendMessage();
     });
 
     function sendMessage() {
@@ -40,8 +37,6 @@ document.addEventListener('DOMContentLoaded', function() {
             userInput.value = '';
             sendButton.classList.remove('active');
             sendButton.disabled = true;
-
-            // Reset textarea height
             userInput.style.height = 'auto';
 
             fetch('/chatbot/get-response/', {
@@ -53,9 +48,25 @@ document.addEventListener('DOMContentLoaded', function() {
                 body: JSON.stringify({ message: message })
             })
             .then(response => response.json())
-            .then(data => appendChatbotMessage(data.message))
+            .then(data => {
+                appendChatbotMessage(data.message);
+
+                if (data.expecting_keyword) {
+                    userInput.focus();
+                } else if (data.timeline) {
+                    appendChatbotMessage("タイムラインが正常に生成されました。");
+                    displayTimeline(data.timeline);  // Hiển thị timeline
+                }
+            })
             .catch(error => console.error('Error:', error));
         }
+    }
+
+    function displayTimeline(timelineHtml) {
+        const timelineDiv = document.createElement('div');
+        timelineDiv.innerHTML = timelineHtml;
+        chatOutput.appendChild(timelineDiv);
+        chatOutput.scrollTop = chatOutput.scrollHeight;  // Tự động cuộn xuống
     }
 
     function appendUserMessage(message) {
@@ -63,7 +74,7 @@ document.addEventListener('DOMContentLoaded', function() {
         userMessageDiv.className = 'user-message';
         userMessageDiv.textContent = message;
         chatOutput.appendChild(userMessageDiv);
-        chatOutput.scrollTop = chatOutput.scrollHeight;  // Tự động cuộn xuống cuối
+        chatOutput.scrollTop = chatOutput.scrollHeight;
     }
 
     function appendChatbotMessage(message) {
@@ -71,7 +82,7 @@ document.addEventListener('DOMContentLoaded', function() {
         chatbotMessageDiv.className = 'chatbot-message';
         chatbotMessageDiv.textContent = message;
         chatOutput.appendChild(chatbotMessageDiv);
-        chatOutput.scrollTop = chatOutput.scrollHeight;  // Tự động cuộn xuống cuối
+        chatOutput.scrollTop = chatOutput.scrollHeight;
     }
 
     function getCookie(name) {

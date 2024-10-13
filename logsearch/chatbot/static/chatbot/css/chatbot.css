@@ -9,6 +9,7 @@
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     background-color: #fff;
+    overflow: hidden; /* Đảm bảo các phần tử không bị tràn ra ngoài */
 }
 
 /* Khung hiển thị tin nhắn */
@@ -20,6 +21,77 @@
     flex-direction: column;
     gap: 10px;
     background-color: #f7f7f7;
+}
+
+/* Timeline cho log details */
+.timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 20px; /* Tạo khoảng cách giữa các mục */
+    margin-top: 20px;
+    background-color: #F8FAFC; /* Màu nền giống processlog */
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Mục trong timeline */
+.timeline-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    padding: 20px;
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* Nội dung timeline */
+.timeline-content {
+    margin-top: 10px;
+    text-align: center;
+    max-width: 100%;
+}
+
+/* Hình ảnh trong timeline */
+.captured-image {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Mũi tên nối giữa các mục trong timeline */
+.timeline-item::after {
+    content: '';
+    position: absolute;
+    bottom: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 2px;
+    height: 40px;
+    background-color: #D64550; /* Màu đỏ của đường nối */
+}
+
+/* Phần đầu mũi tên */
+.timeline-item::before {
+    content: '';
+    position: absolute;
+    bottom: -30px;
+    left: 50%;
+    transform: translateX(-50%) rotate(-45deg);
+    width: 10px;
+    height: 10px;
+    border-left: 2px solid #D64550;
+    border-bottom: 2px solid #D64550;
+}
+
+/* Ẩn mũi tên cho mục cuối cùng */
+.timeline-item:last-child::after,
+.timeline-item:last-child::before {
+    display: none;
 }
 
 /* Tin nhắn của người dùng (căn phải) */
