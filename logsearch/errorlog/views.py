@@ -344,21 +344,25 @@ def summarized_error_logs(request):
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+
 # View to render the error search page
 def error_search(request):
-    return render(request, 'errorlog/error_search.html')
+    return render(request, "errorlog/error_search.html")
+
 
 # API to handle the search request and return flow data
 @api_view(["GET"])
 def search_error_flow(request):
-    search_user = request.GET.get('user', '')
-    error_type = request.GET.get('error_type', '')
+    search_user = request.GET.get("user", "")
+    error_type = request.GET.get("error_type", "")
 
     try:
         # Fetch the user
         user = User.objects.filter(user_name__icontains=search_user).first()
         if not user:
-            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"error": "User not found"}, status=status.HTTP_404_NOT_FOUND
+            )
 
         # Search in ErrorStatistics based on user and error type
         error_stat = ErrorStatistics.objects.filter(
@@ -366,7 +370,10 @@ def search_error_flow(request):
         ).first()
 
         if not error_stat:
-            return Response({"error": "Error statistics not found"}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"error": "Error statistics not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
         # Split actions_before_error and captured_images
         actions = error_stat.actions_before_error.split(",")
