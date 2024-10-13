@@ -79,6 +79,7 @@ def search_logs(request):
 
     return Response(results)
 
+
 @api_view(["POST"])
 def search_logs_by_content(request):
     search_query = request.data.get("search_query", "")
@@ -86,24 +87,25 @@ def search_logs_by_content(request):
     # Thực hiện tìm kiếm trong trường 'content' của bảng MasterLogInfo
     matching_logs = MasterLogInfo.objects.filter(
         content__icontains=search_query
-    ).select_related('master_log')
+    ).select_related("master_log")
 
     results = []
     for info in matching_logs:
         log = info.master_log  # Lấy log tương ứng từ bảng MasterLog
-        results.append({
-            "id": log.id,
-            "filename": log.filename,
-            "note": log.note,
-            "operation_time": log.operation_time,
-            "total_operations": log.total_operations,
-            "content": info.content,
-            "procedure_features": info.procedure_features,
-            "data_features": info.data_features,
-        })
+        results.append(
+            {
+                "id": log.id,
+                "filename": log.filename,
+                "note": log.note,
+                "operation_time": log.operation_time,
+                "total_operations": log.total_operations,
+                "content": info.content,
+                "procedure_features": info.procedure_features,
+                "data_features": info.data_features,
+            }
+        )
 
     return Response(results)
-
 
 
 @api_view(["GET"])
@@ -136,7 +138,9 @@ def generate_procedure(request, log_id):
         steps = []
 
         if master_log.template_file:
-            with open(master_log.template_file.path, newline="", encoding="utf-8") as csvfile:
+            with open(
+                master_log.template_file.path, newline="", encoding="utf-8"
+            ) as csvfile:
                 reader = csv.DictReader(csvfile)
                 for row in reader:
                     description = row["description"]
@@ -144,10 +148,14 @@ def generate_procedure(request, log_id):
 
                     # Chỉ thay thế nếu có input_id trong câu hỏi và trong câu trả lời
                     if input_id and str(input_id) in answers:
-                        description = description.replace(f"{{{input_id}}}", answers[str(input_id)])
+                        description = description.replace(
+                            f"{{{input_id}}}", answers[str(input_id)]
+                        )
                         print(f"Replaced description: {description}")
                     else:
-                        print(f"No input_id for step {row['step_id']}, using default description.")
+                        print(
+                            f"No input_id for step {row['step_id']}, using default description."
+                        )
 
                     # Append step data
                     steps.append(
@@ -161,8 +169,6 @@ def generate_procedure(request, log_id):
         return Response(steps)
     except MasterLog.DoesNotExist:
         return Response({"error": "Log not found"}, status=404)
-
-
 
 
 @api_view(["GET"])
