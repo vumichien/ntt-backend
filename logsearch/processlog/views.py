@@ -79,6 +79,32 @@ def search_logs(request):
 
     return Response(results)
 
+@api_view(["POST"])
+def search_logs_by_content(request):
+    search_query = request.data.get("search_query", "")
+
+    # Thực hiện tìm kiếm trong trường 'content' của bảng MasterLogInfo
+    matching_logs = MasterLogInfo.objects.filter(
+        content__icontains=search_query
+    ).select_related('master_log')
+
+    results = []
+    for info in matching_logs:
+        log = info.master_log  # Lấy log tương ứng từ bảng MasterLog
+        results.append({
+            "id": log.id,
+            "filename": log.filename,
+            "note": log.note,
+            "operation_time": log.operation_time,
+            "total_operations": log.total_operations,
+            "content": info.content,
+            "procedure_features": info.procedure_features,
+            "data_features": info.data_features,
+        })
+
+    return Response(results)
+
+
 
 @api_view(["GET"])
 def get_questions(request, log_id):
