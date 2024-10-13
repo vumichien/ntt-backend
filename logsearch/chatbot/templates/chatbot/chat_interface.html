@@ -7,6 +7,10 @@
 
 {% block body %}
 <div id="chat-container" class="chat-container">
+     <!-- Hidden form for CSRF token -->
+    <form id="csrf-token-form">
+        {% csrf_token %}
+    </form>
     <div id="chat-output" class="chat-output"></div>
     <div class="chat-input-container">
         <textarea id="user-input" class="chat-input" rows="1" placeholder="チャットボットにメッセージを送信する"></textarea>

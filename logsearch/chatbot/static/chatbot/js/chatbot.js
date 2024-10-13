@@ -39,11 +39,13 @@ document.addEventListener('DOMContentLoaded', function() {
             sendButton.disabled = true;
             userInput.style.height = 'auto';
 
+            const csrftoken = getCookie('csrftoken');  // Fetch CSRF token using getCookie function
+
             fetch('/chatbot/get-response/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRFToken': getCookie('csrftoken'),
+                    'X-CSRFToken': csrftoken, // Add CSRF token in headers
                 },
                 body: JSON.stringify({ message: message })
             })
