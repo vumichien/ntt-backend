@@ -7,6 +7,11 @@ import google.cloud.dialogflow_v2 as dialogflow
 from django.urls import reverse
 from processlog.models import MasterLogInfo
 from django.conf import settings
+from django.http import JsonResponse, HttpResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.conf import settings
+import json
+from datetime import datetime, timezone, timedelta
 
 # Đường dẫn đến file JSON của Google Dialogflow
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.path.join(
@@ -218,3 +223,76 @@ def generate_procedure(request):
             return JsonResponse({"message": "手順を生成できませんでした。"})
     else:
         return JsonResponse({"message": "手順を生成できませんでした。"})
+
+@csrf_exempt
+def save_chat_history(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        chat_content = data.get('chat_content')
+        timestamp = data.get('timestamp')
+        keyword = data.get('keyword', 'Unknown')
+        current_file = data.get('current_file')
+        
+        if current_file:
+            # Update existing file
+            filepath = os.path.join(settings.MEDIA_ROOT, 'chat_histories', current_file)
+        else:
+            # Create new file
+            safe_keyword = "".join([c if c.isalnum() else "_" for c in keyword])
+            filename = f"{safe_keyword}_{timestamp.replace(':', '-').replace('.', '-')}.html"
+            filepath = os.path.join(settings.MEDIA_ROOT, 'chat_histories', filename)
+        
+        os.makedirs(os.path.dirname(filepath), exist_ok=True)
+        
+        with open(filepath, 'w', encoding='utf-8') as f:
+            f.write(chat_content)
+        
+        return JsonResponse({'success': True, 'filename': os.path.basename(filepath)})
+    return JsonResponse({'success': False})
+
+
+def get_chat_history(request):
+    history_dir = os.path.join(settings.MEDIA_ROOT, 'chat_histories')
+    files = os.listdir(history_dir)
+    history = []
+    now = datetime.now(timezone.utc)
+    
+    for f in files:
+        if f.endswith('.html'):
+            try:
+                parts = f.split('_')
+                keyword = parts[0]
+                timestamp_str = '_'.join(parts[1:])[:-5]  # Remove .html
+                timestamp = datetime.strptime(timestamp_str, "%Y-%m-%dT%H-%M-%S-%fZ")
+                timestamp = timestamp.replace(tzinfo=timezone.utc)
+                
+                days_ago = (now - timestamp).days
+                
+                if days_ago == 0:
+                    group = "今日"
+                elif days_ago < 7:
+                    group = "過去7日間"
+                elif days_ago < 30:
+                    group = "過去30日間"
+                else:
+                    group = "30日以上前"
+                
+                history.append({
+                    'filename': f,
+                    'keyword': keyword,
+                    'timestamp': timestamp.isoformat(),
+                    'group': group
+                })
+            except Exception as e:
+                print(f"Error parsing file {f}: {str(e)}")
+    
+    history.sort(key=lambda x: x['timestamp'], reverse=True)
+    return JsonResponse({'history': history})
+
+def load_chat_history(request, filename):
+    filepath = os.path.join(settings.MEDIA_ROOT, 'chat_histories', filename)
+    if os.path.exists(filepath):
+        with open(filepath, 'r', encoding='utf-8') as f:
+            content = f.read()
+        return HttpResponse(content)
+    return HttpResponse('File not found', status=404)

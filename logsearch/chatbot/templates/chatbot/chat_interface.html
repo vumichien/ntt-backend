@@ -6,17 +6,28 @@
 {% endblock %}
 
 {% block body %}
-<div id="chat-container" class="chat-container">
-     <!-- Hidden form for CSRF token -->
-    <form id="csrf-token-form">
-        {% csrf_token %}
-    </form>
-    <div id="chat-output" class="chat-output"></div>
-    <div class="chat-input-container">
-        <textarea id="user-input" class="chat-input" rows="1" placeholder="チャットボットにメッセージを送信する"></textarea>
-        <button id="send-button" class="chat-send-button" disabled>
-            <i class="fas fa-paper-plane"></i>
-        </button>
+<div class="chat-wrapper">
+    <div class="chat-sidebar">
+        <div class="sidebar-header">
+            <h3 class="chat-history-header">チャット履歴</h3>
+            <button id="new-chat-button" class="new-chat-button" title="新しいチャット">
+                <i class="fas fa-plus"></i>
+            </button>
+        </div>
+        <ul id="chat-history-list"></ul>
+    </div>
+    <div id="chat-container" class="chat-container">
+        <!-- Hidden form for CSRF token -->
+        <form id="csrf-token-form">
+            {% csrf_token %}
+        </form>
+        <div id="chat-output" class="chat-output"></div>
+        <div class="chat-input-container">
+            <textarea id="user-input" class="chat-input" rows="1" placeholder="チャットボットにメッセージを送信する"></textarea>
+            <button id="send-button" class="chat-send-button" disabled>
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
     </div>
 </div>
 {% endblock %}

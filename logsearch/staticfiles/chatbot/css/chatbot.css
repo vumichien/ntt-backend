@@ -323,3 +323,142 @@
     background-color: #f1f0f0;
     color: black;
 }
+
+.chat-wrapper {
+    display: flex;
+    max-width: 1000px;
+    margin: 0 auto;
+    height: 80vh;
+    overflow: hidden;
+}
+
+.chat-sidebar {
+    width: 300px;
+    background-color: #e9ecef;
+    padding: 20px;
+    border-right: 1px solid #ced4da;
+    display: flex;
+    flex-direction: column;
+    height: 80vh; /* Đảm bảo sidebar có chiều cao cố định */
+}
+
+.sidebar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-shrink: 0;
+}
+
+.chat-history-header {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #333;
+    margin: 0;
+}
+
+.new-chat-button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    position: relative;
+}
+
+.new-chat-button:hover {
+    background-color: #0056b3;
+}
+
+.new-chat-button:hover::after {
+    opacity: 1;
+}
+
+#chat-history-list {
+    list-style-type: none;
+    padding: 0;
+    overflow-y: auto; /* Thêm thanh cuộn dọc */
+    flex-grow: 1; /* Cho phép danh sách lịch sử mở rộng */
+}
+
+/* Style cho thanh cuộn */
+#chat-history-list::-webkit-scrollbar {
+    width: 8px;
+}
+
+#chat-history-list::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+#chat-history-list::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+#chat-history-list::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+.chat-container {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; 
+}
+
+.chat-history-header {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #007bff;
+}
+
+.chat-history-group {
+    margin-bottom: 20px;
+}
+
+.chat-history-group h4 {
+    font-size: 1em;
+    color: #6c757d;
+    margin-bottom: 10px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.chat-history-group ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.chat-history-group li {
+    cursor: pointer;
+    padding: 10px 15px;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    background-color: #fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    transition: background-color 0.3s ease;
+}
+
+.chat-history-group li:hover {
+    background-color: #f8f9fa;
+}
+
+.chat-history-group li strong {
+    display: block;
+    margin-bottom: 5px;
+    color: #007bff;
+}
+
+.chat-history-group li span {
+    font-size: 0.9em;
+    color: #6c757d;
+}

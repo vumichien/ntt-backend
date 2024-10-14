@@ -2,6 +2,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const chatOutput = document.getElementById('chat-output');
     const userInput = document.getElementById('user-input');
     const sendButton = document.getElementById('send-button');
+    let saveTimeout;
+    const chatHistoryList = document.getElementById('chat-history-list');
+    let currentEditingFile = null;
+    let lastKeyword = '';
 
     userInput.addEventListener('input', function() {
         adjustTextareaHeight(this);
@@ -54,6 +58,14 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(data => {
                 if (data.message) {
+                    if (data.expecting_keyword) {
+                        lastKeyword = '';  // Reset lastKeyword when bot asks for a new keyword
+                    } else if (lastKeyword === '' && data.message === "どのキーワードでログを検索したいですか？") {
+                        // Don't save lastKeyword here, wait for user's response
+                    } else if (lastKeyword === '') {
+                        lastKeyword = messageToSend;  // Save the keyword
+                        saveChatHistory();  // Save chat history after getting the keyword
+                    }
                     if (data.raw_html) {
                         appendChatbotMessage(data.message, true);
                     } else {
@@ -64,7 +76,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (data.show_buttons) {
                     displayConfirmationButtons();
                 } else if (data.expecting_keyword) {
-                    userInput.focus();
+                    lastKeyword = ''; 
+                } else if (lastKeyword === '' && data.message !== "どのキーワードでログを検索したいですか？") {
+                    lastKeyword = messageToSend;  // Save the keyword
                 }
 
                 if (data.timeline) {
@@ -72,6 +86,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             })
             .catch(error => console.error('Error:', error));
+
+            resetSaveTimeout();
         }
     }
 
@@ -189,4 +205,118 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         return cookieValue;
     }
+
+    function saveChatHistory() {
+        const chatOutput = document.getElementById('chat-output').innerHTML;
+        const timestamp = new Date().toISOString();
+        
+        fetch('/chatbot/save-history/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken'),
+            },
+            body: JSON.stringify({ 
+                chat_content: chatOutput,
+                timestamp: timestamp,
+                keyword: lastKeyword,
+                current_file: currentEditingFile
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                currentEditingFile = data.filename;
+                updateChatHistoryList();
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    }
+
+    function updateChatHistoryList() {
+        fetch('/chatbot/get-history/')
+        .then(response => response.json())
+        .then(data => {
+            chatHistoryList.innerHTML = '';
+            const groups = {};
+            
+            data.history.forEach(item => {
+                if (!groups[item.group]) {
+                    groups[item.group] = [];
+                }
+                groups[item.group].push(item);
+            });
+            
+            for (const [group, items] of Object.entries(groups)) {
+                const groupElement = document.createElement('div');
+                groupElement.className = 'chat-history-group';
+                groupElement.innerHTML = `<h4>${group}</h4>`;
+                
+                const groupList = document.createElement('ul');
+                items.forEach(item => {
+                    const li = document.createElement('li');
+                    const date = new Date(item.timestamp);
+                    const formattedDate = `${date.getFullYear()}/${(date.getMonth()+1).toString().padStart(2, '0')}/${date.getDate().toString().padStart(2, '0')} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+                    li.innerHTML = `<strong>${item.keyword}</strong><span>${formattedDate}</span>`;
+                    li.onclick = () => loadChatHistory(item.filename);
+                    groupList.appendChild(li);
+                });
+                
+                groupElement.appendChild(groupList);
+                chatHistoryList.appendChild(groupElement);
+            }
+        })
+        .catch(error => console.error('Error updating chat history:', error));
+    }
+
+    function loadChatHistory(filename) {
+        fetch(`/chatbot/load-history/${filename}/`)
+        .then(response => response.text())
+        .then(html => {
+            document.getElementById('chat-output').innerHTML = html;
+            currentEditingFile = filename;
+        })
+        .catch(error => console.error('Error:', error));
+    }
+
+    function resetSaveTimeout() {
+        clearTimeout(saveTimeout);
+        saveTimeout = setTimeout(() => {
+            if (currentEditingFile) {
+                saveChatHistory();
+            }
+        }, 1000);
+    }
+
+    // Thêm event listener cho input để reset timeout
+    userInput.addEventListener('input', resetSaveTimeout);
+
+    // Cập nhật danh sách lịch sử chat khi trang được tải
+    updateChatHistoryList();
+
+    const newChatButton = document.getElementById('new-chat-button');
+    
+    newChatButton.addEventListener('click', function() {
+        // Clear the chat output
+        chatOutput.innerHTML = '';
+        // Reset the current editing file
+        currentEditingFile = null;
+        // Reset the last keyword
+        lastKeyword = '';
+        // Clear the user input
+        userInput.value = '';
+        // Disable the send button
+        sendButton.classList.remove('active');
+        sendButton.disabled = true;
+        // Optionally, you can add a welcome message here
+        appendChatbotMessage("こんにちは！どのようなお手伝いができますか？");
+    });
 });
+
+function appendChatbotMessage(message) {
+    const messageElement = document.createElement('div');
+    messageElement.className = 'chatbot-message';
+    messageElement.textContent = message;
+    chatOutput.appendChild(messageElement);
+    chatOutput.scrollTop = chatOutput.scrollHeight;
+}
