@@ -34,8 +34,8 @@ document.addEventListener('DOMContentLoaded', function() {
     function displayProcedure(steps) {
         const timeline = document.getElementById('timeline');
         timeline.innerHTML = '';
-
-        steps.forEach((step) => {
+    
+        steps.forEach((step, index) => {
             const timelineItem = document.createElement('div');
             timelineItem.className = "timeline-item";
             timelineItem.innerHTML = `
@@ -47,6 +47,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             `;
             timeline.appendChild(timelineItem);
+    
+            // Thêm mũi tên sau mỗi bước, ngoại trừ bước cuối cùng
+            if (index < steps.length - 1) {
+                const arrow = document.createElement('div');
+                arrow.className = "timeline-arrow";
+                arrow.innerHTML = '<div class="arrow"></div>';
+                timeline.appendChild(arrow);
+            }
         });
     }
 

@@ -6,10 +6,11 @@ from django.shortcuts import render
 import google.cloud.dialogflow_v2 as dialogflow
 from django.urls import reverse
 from processlog.models import MasterLogInfo
+from django.conf import settings
 
 # Đường dẫn đến file JSON của Google Dialogflow
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = (
-    r"C:\work\logsearch\ntt-backend\logsearch\logsearch-438406-3344f6159368.json"
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.path.join(
+    settings.BASE_DIR, "logsearch-438406-3344f6159368.json"
 )
 
 
@@ -72,42 +73,75 @@ def get_chat_response(request):
         question_index = request.session.get("question_index", 0)
         answers = request.session.get("answers", {})
 
-        # Lưu câu trả lời hiện tại
+        # Save the current answer
         answer = user_message
         answers[questions[question_index]["question_id"]] = answer
-        request.session["answers"] = answers  # Lưu câu trả lời vào session
+        request.session["answers"] = answers  # Save answers to session
 
-        # Chuyển sang câu hỏi tiếp theo nếu có
+        # Move to the next question if available
         if question_index < len(questions) - 1:
             question_index += 1
             chatbot_message = f"質問{question_index + 1}: {questions[question_index]['question_text']}"
             request.session["question_index"] = question_index
             return JsonResponse({"message": chatbot_message, "expecting_answer": True})
         else:
-            chatbot_message = "全ての質問が完了しました。処理を生成しています..."
-            request.session["expecting_answer"] = (
-                False  # Kết thúc trạng thái đợi câu trả lời
-            )
+            # Ask if the user wants to generate the procedure
+            chatbot_message = """
+            <div class="chatbot-message-with-buttons">
+                <span class="chatbot-text">全ての質問が完了しました。操作を生成しますか？</span>
+                <div class="button-container">
+                    <button class="yes-button">はい</button>
+                    <button class="no-button">いいえ</button>
+                </div>
+            </div>
+            """
+            request.session["expecting_answer"] = False
+            request.session["awaiting_procedure_confirmation"] = True
+            return JsonResponse({"message": chatbot_message, "raw_html": True})
 
-            # Gọi API generate_procedure để tạo quy trình
+    # Handle procedure confirmation
+    if request.session.get("awaiting_procedure_confirmation", False):
+        request.session["awaiting_procedure_confirmation"] = False
+        if user_message == "はい":
+            # Call API to generate procedure
             log_id = request.session.get("selected_log_id")
             generate_procedure_url = request.build_absolute_uri(
                 reverse("generate_procedure", args=[log_id])
             )
-            response = requests.post(generate_procedure_url, json={"answers": answers})
-            # Khi API trả về procedure
+            response = requests.post(generate_procedure_url, json={"answers": request.session.get("answers", {})})
+            # When API returns procedure
             if response.status_code == 200:
                 try:
-                    procedure = response.json()  # Đảm bảo đây là list của các dict
-                    timeline_html = render_procedure_timeline(procedure)
-                    return JsonResponse(
-                        {"message": chatbot_message, "timeline": timeline_html}
-                    )
+                    procedure = response.json()
+                    
+                    # Fetch log info
+                    log_info_url = request.build_absolute_uri(reverse("get_log_info", args=[log_id]))
+                    log_info_response = requests.get(log_info_url)
+                    log_info = log_info_response.json() if log_info_response.status_code == 200 else {}
+                    
+                    # Create the header card with log info
+                    header_card = f"""
+                    <div class="timeline-header-card">
+                        <h3>ログ概要</h3>
+                        <p><strong>操作数:</strong> {log_info.get('total_operations', 'N/A')}</p>
+                        <p><strong>ログの内容:</strong> {log_info.get('operation_time', 'N/A')}</p>
+                    </div>
+                    """
+                    
+                    # Combine header card and timeline
+                    timeline_html = header_card + render_procedure_timeline(procedure)
+                    
+                    return JsonResponse({
+                        "timeline": timeline_html
+                    })
                 except (ValueError, TypeError) as e:
                     print(f"Error in procedure response: {e}")
                     return JsonResponse({"message": "手順を生成できませんでした。"})
             else:
                 return JsonResponse({"message": "手順を生成できませんでした。"})
+        elif user_message == "いいえ":
+            request.session["expecting_keyword"] = True
+            return JsonResponse({"message": "どのキーワードでログを検索したいですか？", "expecting_keyword": True})
 
     # Gọi Dialogflow để xử lý intent khác nếu không phải tìm kiếm log
     session_client = dialogflow.SessionsClient()
@@ -129,10 +163,11 @@ def get_chat_response(request):
 
 
 def render_procedure_timeline(procedure_steps):
-    timeline_html = ""
-    for step in procedure_steps:
+    timeline_html = '<div class="chat-timeline">'
+    for i, step in enumerate(procedure_steps, start=1):
         step_html = f"""
         <div class="timeline-item">
+            <div class="step-number">ステップ {i}</div>
             <div class="timeline-content">
                 <img src="/media/{step['capimg']}" alt="Captured" class="captured-image">
                 <div class="text-content">
@@ -142,4 +177,33 @@ def render_procedure_timeline(procedure_steps):
         </div>
         """
         timeline_html += step_html
+        
+        # Add arrow between items, except for the last item
+        if i < len(procedure_steps):
+            timeline_html += '<div class="timeline-arrow"></div>'
+
+    timeline_html += '</div>'
     return timeline_html
+
+
+def generate_procedure(request):
+    log_id = request.session.get("selected_log_id")
+    answers = request.session.get("answers", {})
+    generate_procedure_url = request.build_absolute_uri(
+        reverse("generate_procedure", args=[log_id])
+    )
+    response = requests.post(generate_procedure_url, json={"answers": answers})
+    
+    if response.status_code == 200:
+        try:
+            procedure = response.json()
+            timeline_html = render_procedure_timeline(procedure)
+            return JsonResponse({
+                "message": "処理が生成されました。",
+                "timeline": timeline_html
+            })
+        except (ValueError, TypeError) as e:
+            print(f"Error in procedure response: {e}")
+            return JsonResponse({"message": "手順を生成できませんでした。"})
+    else:
+        return JsonResponse({"message": "手順を生成できませんでした。"})

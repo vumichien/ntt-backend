@@ -1,191 +1,325 @@
 /* Container tổng */
 .chat-container {
-    max-width: 800px;
-    margin: 0 auto;
-    display: flex;
-    flex-direction: column;
-    height: 80vh;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    background-color: #fff;
-    overflow: hidden; /* Đảm bảo các phần tử không bị tràn ra ngoài */
+  max-width: 800px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  height: 80vh;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  background-color: #fff;
+  overflow: hidden; /* Đảm bảo các phần tử không bị tràn ra ngoài */
 }
 
 /* Khung hiển thị tin nhắn */
 .chat-output {
-    flex-grow: 1;
-    padding: 20px;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    background-color: #f7f7f7;
+  flex-grow: 1;
+  padding: 20px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background-color: #f7f7f7;
 }
 
 /* Timeline cho log details */
 .timeline {
-    display: flex;
-    flex-direction: column;
-    gap: 20px; /* Tạo khoảng cách giữa các mục */
-    margin-top: 20px;
-    background-color: #F8FAFC; /* Màu nền giống processlog */
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 20px; /* Tạo khoảng cách giữa các mục */
+  margin-top: 20px;
+  background-color: #f8fafc; /* Màu nền giống processlog */
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
 /* Mục trong timeline */
 .timeline-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    position: relative;
-    padding: 20px;
-    background: #ffffff;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  padding: 20px;
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+  margin-bottom: 15px; /* Giảm margin-bottom giữa các mục timeline */
 }
 
 /* Nội dung timeline */
 .timeline-content {
-    margin-top: 10px;
-    text-align: center;
-    max-width: 100%;
+  margin-top: 10px;
+  text-align: center;
+  max-width: 100%;
 }
 
 /* Hình ảnh trong timeline */
 .captured-image {
-    max-width: 100%;
-    height: auto;
-    border-radius: 8px;
-    margin-bottom: 12px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
 /* Mũi tên nối giữa các mục trong timeline */
 .timeline-item::after {
-    content: '';
-    position: absolute;
-    bottom: -20px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 2px;
-    height: 40px;
-    background-color: #D64550; /* Màu đỏ của đường nối */
+  content: "";
+  position: absolute;
+  bottom: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2px;
+  height: 40px;
+  background-color: #d64550; /* Màu đỏ của đường nối */
 }
 
 /* Phần đầu mũi tên */
 .timeline-item::before {
-    content: '';
-    position: absolute;
-    bottom: -30px;
-    left: 50%;
-    transform: translateX(-50%) rotate(-45deg);
-    width: 10px;
-    height: 10px;
-    border-left: 2px solid #D64550;
-    border-bottom: 2px solid #D64550;
+  content: "";
+  position: absolute;
+  bottom: -30px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-45deg);
+  width: 10px;
+  height: 10px;
+  border-left: 2px solid #d64550;
+  border-bottom: 2px solid #d64550;
 }
 
 /* Ẩn mũi tên cho mục cuối cùng */
 .timeline-item:last-child::after,
 .timeline-item:last-child::before {
-    display: none;
+  display: none;
 }
 
 /* Tin nhắn của người dùng (căn phải) */
 .user-message {
-    align-self: flex-end;
-    background-color: #007BFF;
-    color: #fff;
-    padding: 10px 15px;
-    border-radius: 20px;
-    max-width: 60%;
-    word-wrap: break-word;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    font-size: 16px;
+  align-self: flex-end;
+  background-color: #007bff;
+  color: #fff;
+  padding: 10px 15px;
+  border-radius: 20px;
+  max-width: 60%;
+  word-wrap: break-word;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  font-size: 16px;
 }
 
 /* Tin nhắn của bot (căn trái) */
 .chatbot-message {
-    align-self: flex-start;
-    background-color: #E9ECEF;
-    color: #333;
-    padding: 10px 15px;
-    border-radius: 20px;
-    max-width: 60%;
-    word-wrap: break-word;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    font-size: 16px;
+  align-self: flex-start;
+  background-color: #e9ecef;
+  color: #333;
+  padding: 10px 15px;
+  border-radius: 20px;
+  max-width: 60%;
+  word-wrap: break-word;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  font-size: 16px;
 }
 
 /* Phần nhập tin nhắn */
 .chat-input-container {
-    display: flex;
-    padding: 10px;
-    border-top: 1px solid #ddd;
-    background-color: #fff;
+  display: flex;
+  padding: 10px;
+  border-top: 1px solid #ddd;
+  background-color: #fff;
 }
 
 /* Input của người dùng */
 .chat-input {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 10px;
-    resize: none; /* Ngăn người dùng tự thay đổi kích thước */
-    font-size: 16px;
-    line-height: 1.5;
-    min-height: 40px;
-    max-height: 200px; /* Giới hạn chiều cao tối đa */
-    overflow-y: auto;
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  resize: none; /* Ngăn người dùng tự thay đổi kích thước */
+  font-size: 16px;
+  line-height: 1.5;
+  min-height: 40px;
+  max-height: 200px; /* Giới hạn chiều cao tối đa */
+  overflow-y: auto;
 }
-
 
 /* Nút gửi mũi tên hình tròn */
 .chat-send-button {
-    margin-left: 10px;
-    padding: 10px;
-    background-color: #e0e0e0; /* Màu mờ khi chưa có input */
-    color: #fff;
-    border: none;
-    border-radius: 50%;
-    cursor: not-allowed;
-    font-size: 18px;
-    width: 45px;
-    height: 45px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background-color 0.3s ease;
+  margin-left: 10px;
+  padding: 10px;
+  background-color: #e0e0e0; /* Màu mờ khi chưa có input */
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  cursor: not-allowed;
+  font-size: 18px;
+  width: 45px;
+  height: 45px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.3s ease;
 }
 
 /* Khi nút hoạt động (có input), sẽ thay đổi màu */
 .chat-send-button.active {
-    background-color: #007BFF; /* Màu đậm khi có input */
-    cursor: pointer;
+  background-color: #007bff; /* Màu đậm khi có input */
+  cursor: pointer;
 }
 
 .chat-send-button i {
-    margin: 0;
+  margin: 0;
 }
 
 /* Khi người dùng hover */
 .chat-send-button.active:hover {
-    background-color: #0056b3;
+  background-color: #0056b3;
 }
 
 /* Đảm bảo chat-output không bị che mất */
 .chat-output::-webkit-scrollbar {
-    width: 8px;
+  width: 8px;
 }
 
 .chat-output::-webkit-scrollbar-thumb {
-    background-color: #ccc;
-    border-radius: 10px;
+  background-color: #ccc;
+  border-radius: 10px;
 }
 
 .chat-output::-webkit-scrollbar-track {
-    background-color: #f7f7f7;
+  background-color: #f7f7f7;
+}
+
+.button-container {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.yes-button,
+.no-button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s ease;
+}
+
+.yes-button {
+  background-color: #28a745; /* Green */
+  color: #fff;
+}
+
+.no-button {
+  background-color: #dc3545; /* Red */
+  color: #fff;
+}
+
+.yes-button:hover {
+  background-color: #218838;
+}
+
+.no-button:hover {
+  background-color: #c82333;
+}
+
+.header-card-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 10px; /* Tăng margin-bottom để tạo khoảng cách với timeline */
+  width: 100%; /* Đảm bảo container chiếm toàn bộ chiều rộng */
+}
+
+.timeline-header-card {
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+  padding: 20px;
+  width: 100%;
+  max-width: 80%;
+  text-align: left;
+  margin: 10px auto;
+}
+
+.timeline-header-card h3 {
+  margin-top: 0;
+  color: #333;
+  font-size: 1.2em;
+  margin-bottom: 12px;
+}
+
+.timeline-header-card p {
+  margin: 8px 0;
+  color: #666;
+}
+
+.timeline-header-card strong {
+  color: #333;
+  margin-right: 5px; /* Thêm khoảng cách giữa label và giá trị */
+}
+
+/* Điều chỉnh style cho timeline-item để đảm bảo nhất quán */
+.timeline-item {
+  width: 100%;
+  max-width: 80%; /* Giữ nguyên giá trị này để phù hợp với timeline-header-card */
+  margin: 0 auto 30px; /* Căn giữa và thêm margin dưới */
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+  padding: 20px;
+}
+
+/* Điều chỉnh chat-timeline để đảm bảo các item được căn giữa */
+.chat-timeline {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.message-container {
+    display: flex;
+    margin-bottom: 10px;
+    align-items: flex-start;
+}
+
+.avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.chatbot-message-container {
+    flex-direction: row;
+}
+
+.user-message-container {
+    justify-content: flex-end;
+}
+
+.chatbot-message-container .avatar {
+    margin-right: 5px;
+}
+
+.user-message-container .avatar {
+    margin-left: 5px;
+}
+
+.user-message, .chatbot-message {
+    max-width: 70%;
+    padding: 10px;
+    border-radius: 10px;
+}
+
+.user-message {
+    background-color: #007bff;
+    color: white;
+}
+
+.chatbot-message {
+    background-color: #f1f0f0;
+    color: black;
 }
