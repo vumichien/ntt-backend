@@ -69,6 +69,7 @@ def import_error_log(request):
             ErrorLog.objects.filter(master_error_log=master_error_log).delete()
 
             actions = []
+            captured_images = []  # Thêm danh sách để lưu các capimg tương ứng
             current_win_title = None
 
             for _, row in df.iterrows():
@@ -123,7 +124,13 @@ def import_error_log(request):
                 if pd.notna(row["error_type"]):
                     key = row["error_type"]
                     win_title = row["win_title"]
+                    # Thêm `explanation` và `capimg` hiện tại trước khi lưu
+                    if pd.notna(row["explanation"]):
+                        actions.append(row["explanation"])
+                    if pd.notna(row["capimg"]):
+                        captured_images.append(row["capimg"])
                     actions_str = ",".join(actions)
+                    images_str = ",".join(captured_images)
 
                     # Check if the actions sequence already exists for the same error_type and win_title
                     existing_stat = ErrorStatistics.objects.filter(
@@ -149,6 +156,7 @@ def import_error_log(request):
                             error_type=key,
                             occurrence_count=1,
                             actions_before_error=actions_str,
+                            captured_images=images_str,
                             win_title=win_title,
                         )
                         if row["user_name"]:
@@ -159,13 +167,17 @@ def import_error_log(request):
 
                     # Reset actions for the next error_type
                     actions = []
+                    captured_images = []
 
                 if current_win_title != row["win_title"]:
                     current_win_title = row["win_title"]
                     actions = []
+                    captured_images = []
 
                 if pd.notna(row["explanation"]):
                     actions.append(row["explanation"])
+                if pd.notna(row["capimg"]):
+                    captured_images.append(row["capimg"])
 
         return Response(
             {"message": "Error log data imported and statistics updated successfully"},
@@ -328,6 +340,51 @@ def summarized_error_logs(request):
             )
 
         return Response(result, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+# View to render the error search page
+def error_search(request):
+    return render(request, "errorlog/error_search.html")
+
+
+# API to handle the search request and return flow data
+@api_view(["GET"])
+def search_error_flow(request):
+    search_user = request.GET.get("user", "")
+    error_type = request.GET.get("error_type", "")
+
+    try:
+        # Fetch the user
+        user = User.objects.filter(user_name__icontains=search_user).first()
+        if not user:
+            return Response(
+                {"error": "User not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        # Search in ErrorStatistics based on user and error type
+        error_stat = ErrorStatistics.objects.filter(
+            users=user, error_type=error_type
+        ).first()
+
+        if not error_stat:
+            return Response(
+                {"error": "Error statistics not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Split actions_before_error and captured_images
+        actions = error_stat.actions_before_error.split(",")
+        images = error_stat.captured_images.split(",")
+
+        # Pair actions and images
+        flow = []
+        for action, image in zip(actions, images):
+            flow.append({"explanation": action, "capimg": image})
+
+        return Response(flow)
 
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

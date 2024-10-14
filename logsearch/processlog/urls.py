@@ -7,6 +7,11 @@ urlpatterns = [
     path("master-logs/", views.get_master_logs, name="master_logs"),
     path("log-entries/<int:master_log_id>/", views.get_log_entries, name="log_entries"),
     path("search-logs/", views.search_logs, name="search_logs"),
+    path(
+        "search-logs-by-content/",
+        views.search_logs_by_content,
+        name="search_logs_by_content",
+    ),
     path("log-details/<int:log_id>/", views.get_log_details, name="log_details"),
     path("get-log-info/<int:log_id>/", views.get_log_info, name="get_log_info"),
     path(

@@ -247,7 +247,7 @@
 
 /* Điều chỉnh vị trí của timeline content */
 .timeline-content {
-    margin-top: 20px; /* Tạo khoảng cách từ điểm tròn đến nội dung */
+    margin-top: 20px;
     background: #F8FAFC;
     padding: 16px;
     border-radius: 8px;
@@ -316,4 +316,95 @@
   border-color: #dee2e6 #dee2e6 #fff;
   font-weight: 700;
   border-bottom: 3px solid #2A4A73;  /* Thêm đường gạch dưới đậm */
+}
+
+.timeline-arrow .error-content {
+    margin-top: 10px;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+}
+
+.last-explanation {
+    color: red;
+    font-weight: bold;
+}
+
+.chat-timeline {
+    max-width: 100%;
+    margin: 0 auto;
+}
+
+.chat-timeline .timeline-item {
+    position: relative;
+    background-color: #f9f9f9;
+    border: 1px solid #e0e0e0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.chat-timeline .step-number {
+    position: absolute;
+    top: -15px;
+    left: 10px;
+    background-color: red;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 14px;
+    font-weight: bold;
+    z-index: 1;
+}
+
+.chat-timeline .timeline-content {
+    margin-top: 0px;
+    padding: 15px;
+}
+
+.chat-timeline .captured-image {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 0 auto 15px;
+    border-radius: 0px;
+}
+
+.chat-timeline .text-content {
+    padding: 0;
+}
+
+.chat-timeline .explanation {
+    margin: 0;
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+/* Tạo đường mũi tên nối giữa các timeline item */
+.chat-timeline .timeline-item::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: -15px;
+    width: 2px;
+    height: 30px;
+    background: #D64550;
+}
+
+/* Tạo phần đầu mũi tên */
+.chat-timeline .timeline-item::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: -15px; /* Điều chỉnh vị trí lên trên */
+    width: 10px;
+    height: 10px;
+    border-left: 2px solid #D64550;
+    border-bottom: 2px solid #D64550;
+    transform: translateX(-50%) rotate(-45deg);
+}
+
+/* Ẩn mũi tên cho timeline item cuối cùng */
+.chat-timeline .timeline-item:last-child::after,
+.chat-timeline .timeline-item:last-child::before {
+    display: none;
 }

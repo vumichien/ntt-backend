@@ -25,6 +25,7 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("process-log/", include("processlog.urls")),
     path("error-log/", include("errorlog.urls")),
+    path("chatbot/", include("chatbot.urls")),
     path("", RedirectView.as_view(url="/process-log/", permanent=False), name="index"),
 ]
 

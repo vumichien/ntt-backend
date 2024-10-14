@@ -34,6 +34,7 @@ ALLOWED_HOSTS = []
 INSTALLED_APPS = [
     "errorlog",
     "processlog",
+    "chatbot",
     "corsheaders",
     "rest_framework",
     "django.contrib.admin",
@@ -128,6 +129,7 @@ STATIC_URL = "static/"
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "processlog", "static"),
     os.path.join(BASE_DIR, "errorlog", "static"),
+    os.path.join(BASE_DIR, "chatbot", "static"),
 ]
 
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
