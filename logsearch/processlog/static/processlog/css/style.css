@@ -247,7 +247,7 @@
 
 /* Điều chỉnh vị trí của timeline content */
 .timeline-content {
-    margin-top: 20px; 
+    margin-top: 20px;
     background: #F8FAFC;
     padding: 16px;
     border-radius: 8px;
@@ -357,7 +357,7 @@
 }
 
 .chat-timeline .timeline-content {
-    margin-top: 0px; 
+    margin-top: 0px;
     padding: 15px;
 }
 

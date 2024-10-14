@@ -108,17 +108,26 @@ def get_chat_response(request):
             generate_procedure_url = request.build_absolute_uri(
                 reverse("generate_procedure", args=[log_id])
             )
-            response = requests.post(generate_procedure_url, json={"answers": request.session.get("answers", {})})
+            response = requests.post(
+                generate_procedure_url,
+                json={"answers": request.session.get("answers", {})},
+            )
             # When API returns procedure
             if response.status_code == 200:
                 try:
                     procedure = response.json()
-                    
+
                     # Fetch log info
-                    log_info_url = request.build_absolute_uri(reverse("get_log_info", args=[log_id]))
+                    log_info_url = request.build_absolute_uri(
+                        reverse("get_log_info", args=[log_id])
+                    )
                     log_info_response = requests.get(log_info_url)
-                    log_info = log_info_response.json() if log_info_response.status_code == 200 else {}
-                    
+                    log_info = (
+                        log_info_response.json()
+                        if log_info_response.status_code == 200
+                        else {}
+                    )
+
                     # Create the header card with log info
                     header_card = f"""
                     <div class="timeline-header-card">
@@ -127,13 +136,11 @@ def get_chat_response(request):
                         <p><strong>ログの内容:</strong> {log_info.get('operation_time', 'N/A')}</p>
                     </div>
                     """
-                    
+
                     # Combine header card and timeline
                     timeline_html = header_card + render_procedure_timeline(procedure)
-                    
-                    return JsonResponse({
-                        "timeline": timeline_html
-                    })
+
+                    return JsonResponse({"timeline": timeline_html})
                 except (ValueError, TypeError) as e:
                     print(f"Error in procedure response: {e}")
                     return JsonResponse({"message": "手順を生成できませんでした。"})
@@ -141,7 +148,12 @@ def get_chat_response(request):
                 return JsonResponse({"message": "手順を生成できませんでした。"})
         elif user_message == "いいえ":
             request.session["expecting_keyword"] = True
-            return JsonResponse({"message": "どのキーワードでログを検索したいですか？", "expecting_keyword": True})
+            return JsonResponse(
+                {
+                    "message": "どのキーワードでログを検索したいですか？",
+                    "expecting_keyword": True,
+                }
+            )
 
     # Gọi Dialogflow để xử lý intent khác nếu không phải tìm kiếm log
     session_client = dialogflow.SessionsClient()
@@ -177,12 +189,12 @@ def render_procedure_timeline(procedure_steps):
         </div>
         """
         timeline_html += step_html
-        
+
         # Add arrow between items, except for the last item
         if i < len(procedure_steps):
             timeline_html += '<div class="timeline-arrow"></div>'
 
-    timeline_html += '</div>'
+    timeline_html += "</div>"
     return timeline_html
 
 
@@ -193,15 +205,14 @@ def generate_procedure(request):
         reverse("generate_procedure", args=[log_id])
     )
     response = requests.post(generate_procedure_url, json={"answers": answers})
-    
+
     if response.status_code == 200:
         try:
             procedure = response.json()
             timeline_html = render_procedure_timeline(procedure)
-            return JsonResponse({
-                "message": "処理が生成されました。",
-                "timeline": timeline_html
-            })
+            return JsonResponse(
+                {"message": "処理が生成されました。", "timeline": timeline_html}
+            )
         except (ValueError, TypeError) as e:
             print(f"Error in procedure response: {e}")
             return JsonResponse({"message": "手順を生成できませんでした。"})

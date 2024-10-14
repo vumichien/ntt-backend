@@ -109,20 +109,20 @@ document.addEventListener('DOMContentLoaded', function() {
     function displayTimeline(timelineHtml) {
         const headerCardContainer = document.createElement('div');
         headerCardContainer.className = 'header-card-container';
-        
+
         const headerCardMatch = timelineHtml.match(/<div class="timeline-header-card">[\s\S]*?<\/div>/);
         if (headerCardMatch) {
             headerCardContainer.innerHTML = headerCardMatch[0];
             timelineHtml = timelineHtml.replace(headerCardMatch[0], '');
         }
-        
+
         chatOutput.appendChild(headerCardContainer);
-        
+
         const timelineDiv = document.createElement('div');
         timelineDiv.className = 'chat-timeline';
         timelineDiv.innerHTML = timelineHtml;
         chatOutput.appendChild(timelineDiv);
-        
+
         chatOutput.scrollTop = chatOutput.scrollHeight;
     }
 
