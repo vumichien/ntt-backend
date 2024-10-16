@@ -4,6 +4,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const timeline = document.getElementById('timeline');
     const errorFlow = document.getElementById('errorFlow');
     const backButton = document.getElementById('backButton');
+    const leftArrow = document.getElementById('leftArrow');
+    const rightArrow = document.getElementById('rightArrow');
+    let currentIndex = 0;
+    let flowDataArray = [];
 
     // Fetch error types and populate the dropdown
     fetch('/error-log/all-error-types/')
@@ -25,19 +29,41 @@ document.addEventListener('DOMContentLoaded', function() {
 
         fetch(`/error-log/search-flow/?user=${searchUser}&error_type=${selectedErrorType}`)
             .then(response => response.json())
-            .then(data => displayErrorFlow(data))
+            .then(data => {
+                flowDataArray = data;
+                currentIndex = 0;
+                displayErrorFlow(flowDataArray[currentIndex]);  // Display first result
+                updateArrowVisibility(); // Update the visibility of the arrows
+            })
             .catch(error => console.error('Error:', error));
     });
 
-    function escapeHtml(unsafe) {
-    return unsafe
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-    }
+    // Left arrow click event
+    leftArrow.addEventListener('click', function() {
+        if (currentIndex > 0) {
+            currentIndex--;
+            displayErrorFlow(flowDataArray[currentIndex]);
+            updateArrowVisibility();
+        }
+    });
 
+    // Right arrow click event
+    rightArrow.addEventListener('click', function() {
+        if (currentIndex < flowDataArray.length - 1) {
+            currentIndex++;
+            displayErrorFlow(flowDataArray[currentIndex]);
+            updateArrowVisibility();
+        }
+    });
+
+    function escapeHtml(unsafe) {
+        return unsafe
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
 
     // Function to display the error flow (capimg + explanation)
     function displayErrorFlow(flowData) {
@@ -45,9 +71,7 @@ document.addEventListener('DOMContentLoaded', function() {
         flowData.forEach((step, index) => {
             const timelineItem = document.createElement('div');
             timelineItem.className = "timeline-item";
-            // Nếu đây là dòng cuối cùng, thêm lớp 'last-explanation' để thay đổi màu
             const explanationClass = index === flowData.length - 1 ? 'last-explanation' : 'explanation';
-
             timelineItem.innerHTML = `
                 <div class="timeline-content">
                     <img src="/media/${step.capimg}" alt="Captured Image" class="captured-image">
@@ -58,8 +82,13 @@ document.addEventListener('DOMContentLoaded', function() {
             `;
             timeline.appendChild(timelineItem);
         });
-
         errorFlow.style.display = 'block';  // Show the flow
+    }
+
+    // Function to update the visibility of arrows
+    function updateArrowVisibility() {
+        leftArrow.style.visibility = currentIndex === 0 ? 'hidden' : 'visible';
+        rightArrow.style.visibility = currentIndex === flowDataArray.length - 1 ? 'hidden' : 'visible';
     }
 
     // Back button to return to search form

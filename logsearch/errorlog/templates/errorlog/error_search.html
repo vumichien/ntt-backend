@@ -21,7 +21,17 @@
 
     <!-- Display results here -->
     <div id="errorFlow" style="display:none;">
-        <div id="timeline" class="timeline"></div>
+        <div class="row mb-3">
+            <div class="col-1 d-flex align-items-center justify-content-center">
+                <button id="leftArrow" class="btn btn-secondary">&larr;</button>
+            </div>
+            <div class="col-10">
+                <div id="timeline" class="timeline"></div>
+            </div>
+            <div class="col-1 d-flex align-items-center justify-content-center">
+                <button id="rightArrow" class="btn btn-secondary">&rarr;</button>
+            </div>
+        </div>
         <button id="backButton" class="btn btn-secondary mt-3">戻る</button>
     </div>
 </div>

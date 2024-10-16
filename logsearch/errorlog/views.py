@@ -350,41 +350,37 @@ def error_search(request):
     return render(request, "errorlog/error_search.html")
 
 
-# API to handle the search request and return flow data
 @api_view(["GET"])
 def search_error_flow(request):
     search_user = request.GET.get("user", "")
     error_type = request.GET.get("error_type", "")
 
     try:
-        # Fetch the user
-        user = User.objects.filter(user_name__icontains=search_user).first()
-        if not user:
-            return Response(
-                {"error": "User not found"}, status=status.HTTP_404_NOT_FOUND
-            )
+        # Fetch all users whose name contains the search_user string
+        users = User.objects.filter(user_name__icontains=search_user)
+        if not users.exists():
+            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
 
-        # Search in ErrorStatistics based on user and error type
-        error_stat = ErrorStatistics.objects.filter(
-            users=user, error_type=error_type
-        ).first()
+        # Search in ErrorStatistics based on all users and error type
+        error_stats = ErrorStatistics.objects.filter(
+            users__in=users, error_type=error_type
+        ).all()
 
-        if not error_stat:
+        if not error_stats.exists():
             return Response(
                 {"error": "Error statistics not found"},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        # Split actions_before_error and captured_images
-        actions = error_stat.actions_before_error.split(",")
-        images = error_stat.captured_images.split(",")
+        # Prepare data for all error_stats
+        all_flows = []
+        for error_stat in error_stats:
+            actions = error_stat.actions_before_error.split(",")
+            images = error_stat.captured_images.split(",")
+            flow = [{"explanation": action, "capimg": image} for action, image in zip(actions, images)]
+            all_flows.append(flow)
 
-        # Pair actions and images
-        flow = []
-        for action, image in zip(actions, images):
-            flow.append({"explanation": action, "capimg": image})
-
-        return Response(flow)
+        return Response(all_flows)
 
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
