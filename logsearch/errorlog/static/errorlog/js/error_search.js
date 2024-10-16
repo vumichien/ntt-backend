@@ -67,6 +67,24 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Function to display the error flow (capimg + explanation)
     function displayErrorFlow(flowData) {
+         // Update header with user and time information
+        const userHeader = document.getElementById('userHeader');
+        const timeHeader = document.getElementById('timeHeader');
+        const firstStep = flowData[0];
+
+         if (firstStep) {
+            // Set the user_name and time
+            userHeader.textContent = `${firstStep.user_name}の操作履歴`;
+            timeHeader.textContent = `(日時：${new Date(firstStep.time).toLocaleDateString('ja-JP')})`;
+        } else {
+            userHeader.textContent = "No Data Available";
+            timeHeader.textContent = "";
+        }
+
+        // Show the header if it's hidden
+        document.getElementById('errorHeader').style.display = 'block';
+
+        // Rest of the code to display timeline
         timeline.innerHTML = '';
         flowData.forEach((step, index) => {
             const timelineItem = document.createElement('div');

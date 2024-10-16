@@ -388,7 +388,12 @@ def search_error_flow(request):
         for error_stat in error_stats:
             actions = error_stat.actions_before_error.split(",")
             images = error_stat.captured_images.split(",")
-            flow = [{"explanation": action, "capimg": image} for action, image in zip(actions, images)]
+            flow = [{
+                "explanation": action,
+                "capimg": image,
+                "user_name": error_stat.users.first().user_name,  # Get first user name
+                "time": error_stat.master_error_log.error_entries.first().time  # Get the time from first log entry
+            } for action, image in zip(actions, images)]
             all_flows.append(flow)
 
         return Response(all_flows)
