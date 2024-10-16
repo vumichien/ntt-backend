@@ -266,7 +266,7 @@ document.addEventListener('DOMContentLoaded', function() {
             createUserErrorRadarChart(allErrorTypes, userData);
         });
     }
-    
+
     userSelect.addEventListener('change', () => fetchUserErrorRadarData(userSelect.value));
 
     function createUserErrorRadarChart(allErrorTypes, userData) {
