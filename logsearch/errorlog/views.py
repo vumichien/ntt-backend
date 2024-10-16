@@ -3,7 +3,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 from django.utils import timezone
-from django.db.models import Sum, F, Prefetch
+from django.db.models import Sum, F, Prefetch, Count, Avg
 from django.shortcuts import render
 
 import os
@@ -244,6 +244,7 @@ def user_error_statistics(request, user_name=None):
     ).distinct()
 
     if user_name:
+        # Logic cho radar chart
         user_errors = (
             ErrorStatistics.objects.filter(users__user_name=user_name)
             .values("error_type")
@@ -260,15 +261,25 @@ def user_error_statistics(request, user_name=None):
             for error_type in all_error_types
         ]
     else:
-        query = (
-            User.objects.annotate(error_count=Sum("errorstatistics__occurrence_count"))
-            .values("user_name", "error_count")
-            .order_by("-error_count")[:10]
+        # Logic cho bubble chart
+        user_error_counts = ErrorStatistics.objects.values("users").annotate(
+            total_errors=Sum("occurrence_count")
         )
+
+        error_distribution = {}
+        for item in user_error_counts:
+            total_errors = item["total_errors"]
+            if total_errors in error_distribution:
+                error_distribution[total_errors] += 1
+            else:
+                error_distribution[total_errors] = 1
+
         result = [
-            {"user_name": item["user_name"], "error_count": item["error_count"] or 0}
-            for item in query
+            {"error_count": error_count, "user_count": user_count}
+            for error_count, user_count in error_distribution.items()
         ]
+
+        result.sort(key=lambda x: x["error_count"])
 
     return Response(result)
 
@@ -386,5 +397,31 @@ def search_error_flow(request):
 
         return Response(flow)
 
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(["GET"])
+def summary_data(request):
+    try:
+        total_errors = ErrorStatistics.objects.aggregate(Sum("occurrence_count"))[
+            "occurrence_count__sum"
+        ]
+        total_users_with_errors = (
+            User.objects.filter(errorstatistics__isnull=False).distinct().count()
+        )
+        average_errors_per_user = (
+            ErrorStatistics.objects.values("users")
+            .annotate(error_count=Sum("occurrence_count"))
+            .aggregate(Avg("error_count"))["error_count__avg"]
+        )
+
+        return Response(
+            {
+                "total_errors": total_errors,
+                "total_users_with_errors": total_users_with_errors,
+                "average_errors_per_user": average_errors_per_user or 0,
+            }
+        )
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
