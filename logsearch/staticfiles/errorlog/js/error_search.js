@@ -65,6 +65,40 @@ document.addEventListener('DOMContentLoaded', function() {
             .replace(/'/g, "&#039;");
     }
 
+    function extractInputData(explanation) {
+        const inputPattern = /「(.+?)」を入力/g;  // Capture text inside 「」 before を入力
+        let inputs = [];
+        let match;
+
+        // Sử dụng vòng lặp để tìm các khớp (match) cho mỗi lần xuất hiện của biểu thức
+        while ((match = inputPattern.exec(explanation)) !== null) {
+            inputs.push(match[1]);  // Lấy giá trị input giữa 「」 (ở vị trí thứ hai trong match)
+        }
+
+        console.log('Extracted Inputs:', inputs);
+        return inputs;
+    }
+
+
+
+    function displayInputData(flowData) {
+        const inputDataList = document.getElementById('inputDataList');
+        inputDataList.innerHTML = '';  // Clear previous data
+
+        let inputIndex = 1;
+        flowData.forEach(step => {
+            console.log('Explanation:', step.explanation);
+            const inputValues = extractInputData(step.explanation);
+
+            inputValues.forEach(value => {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td>入力欄${inputIndex}：</td><td>${escapeHtml(value)}</td>`;
+                inputDataList.appendChild(row);
+                inputIndex++;
+            });
+        });
+    }
+
     // Function to display the error flow (capimg + explanation)
     function displayErrorFlow(flowData) {
          // Update header with user and time information
