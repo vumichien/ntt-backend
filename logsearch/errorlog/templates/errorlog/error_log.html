@@ -7,47 +7,86 @@
 
 {% block body %}
 <div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="summary-card">
+                <h5>総エラー数</h5>
+                <div class="summary-content">
+                    <p id="totalErrors">Loading...</p>
+                    <span class="unit">件</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="summary-card">
+                <h5>エラー発生ユーザー数</h5>
+                <div class="summary-content">
+                    <p id="totalUsersWithErrors">Loading...</p>
+                    <span class="unit">人</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="summary-card">
+                <h5>ユーザー平均エラー数</h5>
+                <div class="summary-content">
+                    <p id="averageErrorsPerUser">Loading...</p>
+                    <span class="unit">件/人</span>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="row">
         <div class="col-md-6">
-            <div class="chart-card">
-                <h4>エラー種別統計</h4>
-                <select id="errorTypeChartType" class="form-select mb-3">
-                    <option value="bar">棒グラフ</option>
-                    <option value="pie">円グラフ</option>
-                </select>
+            <div class="chart-card fixed-height">
+                <h4>種類別のエラー数</h4>
                 <div class="chart-container">
-                    <canvas id="errorTypeChart"></canvas>
+                    <canvas id="errorTypeBarChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-card fixed-height mt-4">
+                <h4>種類別のエラー率</h4>
+                <div class="chart-container">
+                    <canvas id="errorTypePieChart"></canvas>
                 </div>
             </div>
         </div>
         <div class="col-md-6">
-            <div class="chart-card">
-                <h4>ユーザーエラー統計</h4>
-                <select id="userSelect" class="form-select mb-3">
-                    <option value="">全てのユーザー</option>
-                </select>
+            <div class="chart-card fixed-height">
+                <h4>同じエラー数の人数</h4>
                 <div class="chart-container">
-                    <canvas id="userErrorChart"></canvas>
+                    <canvas id="userErrorBarChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-card fixed-height mt-4">
+                <h4>ユーザーエラー詳細</h4>
+                <select id="userSelect" class="form-select mb-3">
+                    <option value="">ユーザーを選択</option>
+                </select>
+                <div class="chart-container radar-chart-container">
+                    <canvas id="userErrorRadarChart"></canvas>
                 </div>
             </div>
         </div>
     </div>
     <div class="row mt-4">
         <div class="col-12">
-            <div class="chart-card">
+            <div class="chart-card table-card">
                 <h4>エラー種別詳細統計</h4>
-                <table id="errorTable" class="table">
-                    <thead>
-                        <tr>
-                            <th>エラー種別</th>
-                            <th>発生件数</th>
-                            <th>エラー発生前の操作手順</th>
-                            <th>ユーザーID</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    </tbody>
-                </table>
+                <div class="table-container">
+                    <table id="errorTable" class="table">
+                        <thead>
+                            <tr>
+                                <th>エラー種別</th>
+                                <th>発生件数</th>
+                                <th>エラー発生前の操作手順</th>
+                                <th>ユーザーID</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+                </div>
                 <div id="pagination" class="pagination"></div>
             </div>
         </div>

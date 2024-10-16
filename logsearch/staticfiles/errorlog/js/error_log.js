@@ -1,6 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
-    let errorTypeChart, userErrorChart;
-    const errorTypeChartType = document.getElementById('errorTypeChartType');
+    let errorTypeBarChart, errorTypePieChart, userErrorBarChart, userErrorRadarChart;
     const userSelect = document.getElementById('userSelect');
     const errorTable = document.getElementById('errorTable').getElementsByTagName('tbody')[0];
     const pagination = document.getElementById('pagination');
@@ -11,165 +10,326 @@ document.addEventListener('DOMContentLoaded', function() {
     fetchUserErrorData();
     fetchUsers();
     fetchSummarizedErrorLogs();
+    fetchSummaryData();
 
-    errorTypeChartType.addEventListener('change', fetchErrorTypeData);
-    userSelect.addEventListener('change', () => fetchUserErrorData(userSelect.value));
+    userSelect.addEventListener('change', () => fetchUserErrorRadarData(userSelect.value));
 
     function fetchErrorTypeData() {
         fetch('/error-log/error-type-statistics/')
             .then(response => response.json())
             .then(data => {
-                const ctx = document.getElementById('errorTypeChart').getContext('2d');
-                const chartType = errorTypeChartType.value;
-                const colors = generateColors(data.length);
-
-                const chartData = {
-                    labels: data.map(item => item.error_type),
-                    datasets: [{
-                        label: 'エラー発生回数',
-                        data: data.map(item => item.total_occurrences),
-                        backgroundColor: chartType === 'bar' ? 'rgba(75, 192, 192, 0.6)' : colors,
-                        borderColor: chartType === 'bar' ? 'rgba(75, 192, 192, 1)' : colors,
-                        borderWidth: 1
-                    }]
-                };
-
-                const chartOptions = {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: chartType === 'pie'
-                        }
-                    },
-                    scales: chartType === 'bar' ? {
-                        x: {
-                            title: {
-                                display: true,
-                                text: 'エラー種別'
-                            }
-                        },
-                        y: {
-                            title: {
-                                display: true,
-                                text: '発生件数'
-                            },
-                            beginAtZero: true
-                        }
-                    } : {}
-                };
-
-                if (errorTypeChart) {
-                    errorTypeChart.destroy();
-                }
-
-                errorTypeChart = new Chart(ctx, {
-                    type: chartType,
-                    data: chartData,
-                    options: chartOptions
-                });
+                createErrorTypeBarChart(data);
+                createErrorTypePieChart(data);
             });
     }
 
-    function fetchUserErrorData(selectedUser = '') {
+    function createErrorTypeBarChart(data) {
+        const ctx = document.getElementById('errorTypeBarChart').getContext('2d');
+        const chartData = {
+            labels: data.map(item => item.error_type),
+            datasets: [{
+                label: 'エラー発生回数',
+                data: data.map(item => item.total_occurrences),
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                borderColor: 'rgb(75, 192, 192)',
+                borderWidth: 1
+            }]
+        };
+
+        const chartOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: {
+                    grid: {
+                        display: false,
+                        drawBorder: false,
+                    },
+                    ticks: {
+                        padding: 5
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: '発生件数'
+                    },
+                    grid: {
+                        display: true,
+                        drawBorder: false,
+                    },
+                    ticks: {
+                        padding: 5
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false,
+                }
+            },
+            layout: {
+                padding: {
+                    left: 10,
+                    right: 30,
+                    top: 0,
+                    bottom: 0
+                }
+            }
+        };
+
+        if (errorTypeBarChart) {
+            errorTypeBarChart.destroy();
+        }
+
+        errorTypeBarChart = new Chart(ctx, {
+            type: 'bar',
+            data: chartData,
+            options: chartOptions
+        });
+    }
+
+    function createErrorTypePieChart(data) {
+        data.sort((a, b) => a.error_type.localeCompare(b.error_type));
+
+        const ctx = document.getElementById('errorTypePieChart').getContext('2d');
+        const totalOccurrences = data.reduce((sum, item) => sum + item.total_occurrences, 0);
+        const chartData = {
+            labels: data.map(item => item.error_type),
+            datasets: [{
+                data: data.map(item => item.total_occurrences),
+                backgroundColor: [
+                    'rgba(255, 99, 132, 0.2)',
+                    'rgba(255, 159, 64, 0.2)',
+                    'rgba(255, 205, 86, 0.2)',
+                    'rgba(75, 192, 192, 0.2)',
+                    'rgba(54, 162, 235, 0.2)',
+                    'rgba(153, 102, 255, 0.2)',
+                    'rgba(201, 203, 207, 0.2)'
+                ],
+                borderColor: [
+                    'rgb(255, 99, 132)',
+                    'rgb(255, 159, 64)',
+                    'rgb(255, 205, 86)',
+                    'rgb(75, 192, 192)',
+                    'rgb(54, 162, 235)',
+                    'rgb(153, 102, 255)',
+                    'rgb(201, 203, 207)'
+                ],
+                borderWidth: 1
+            }]
+        };
+
+        const chartOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: {
+                        sort: (a, b) => a.text.localeCompare(b.text)
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.raw;
+                            const percentage = ((value / totalOccurrences) * 100).toFixed(1);
+                            return `${label}: ${value}件 (${percentage}%)`;
+                        }
+                    }
+                }
+            }
+        };
+
+        if (errorTypePieChart) {
+            errorTypePieChart.destroy();
+        }
+
+        errorTypePieChart = new Chart(ctx, {
+            type: 'pie',
+            data: chartData,
+            options: chartOptions
+        });
+    }
+
+    function fetchUserErrorData() {
+        fetch('/error-log/user-error-statistics/')
+            .then(response => response.json())
+            .then(data => {
+                createUserErrorBubbleChart(data);
+            });
+    }
+
+    function createUserErrorBubbleChart(data) {
+        const ctx = document.getElementById('userErrorBarChart').getContext('2d');
+
+        const maxErrorCount = Math.max(...data.map(item => item.error_count));
+        const maxUserCount = Math.max(...data.map(item => item.user_count));
+
+        const xAxisMax = Math.ceil(maxErrorCount * 1.1);
+        const yAxisMax = Math.ceil(maxUserCount * 1.2);
+
+        const chartData = {
+            datasets: [{
+                label: 'ユーザーエラー統計',
+                data: data.map(item => ({
+                    x: item.error_count,
+                    y: item.user_count,
+                    r: Math.sqrt(item.user_count) * 2
+                })),
+                backgroundColor: 'rgba(255, 159, 64, 0.2)',
+                borderColor: 'rgb(255, 159, 64)',
+                borderWidth: 1
+            }]
+        };
+
+        const chartOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: {
+                    type: 'linear',
+                    position: 'bottom',
+                    title: {
+                        display: true,
+                        text: 'エラー回数'
+                    },
+                    min: 0,
+                    max: xAxisMax,
+                    ticks: {
+                        stepSize: 1,
+                        precision: 0
+                    },
+                    grid: {
+                        display: true,
+                        drawBorder: true,
+                    },
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'ユーザー数'
+                    },
+                    min: 0,
+                    max: yAxisMax,
+                    ticks: {
+                        stepSize: 5,
+                        precision: 0
+                    },
+                    grid: {
+                        display: true,
+                        drawBorder: true,
+                    },
+                }
+            },
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return `${context.parsed.y}人`;
+                        }
+                    }
+                },
+                legend: {
+                    display: false
+                }
+            }
+        };
+
+        if (userErrorBarChart) {
+            userErrorBarChart.destroy();
+        }
+
+        userErrorBarChart = new Chart(ctx, {
+            type: 'bubble',
+            data: chartData,
+            options: chartOptions
+        });
+    }
+
+    function fetchUserErrorRadarData(selectedUser) {
+        if (!selectedUser) {
+            if (userErrorRadarChart) {
+                userErrorRadarChart.destroy();
+            }
+            return;
+        }
+
         Promise.all([
             fetch('/error-log/all-error-types/').then(response => response.json()),
-            fetch(`/error-log/user-error-statistics/${selectedUser ? selectedUser + '/' : ''}`)
-                .then(response => response.json())
+            fetch(`/error-log/user-error-statistics/${selectedUser}/`).then(response => response.json())
         ])
         .then(([allErrorTypes, userData]) => {
-            const ctx = document.getElementById('userErrorChart').getContext('2d');
-            const chartType = selectedUser ? 'radar' : 'bar';
+            createUserErrorRadarChart(allErrorTypes, userData);
+        });
+    }
+    
+    userSelect.addEventListener('change', () => fetchUserErrorRadarData(userSelect.value));
 
-            let chartData, chartOptions;
+    function createUserErrorRadarChart(allErrorTypes, userData) {
+        const ctx = document.getElementById('userErrorRadarChart').getContext('2d');
+        const totalErrors = userData.reduce((sum, item) => sum + item.error_count, 0);
+        const chartData = {
+            labels: allErrorTypes,
+            datasets: [{
+                label: 'エラー割合 (%)',
+                data: allErrorTypes.map(errorType => {
+                    const error = userData.find(item => item.error_type === errorType);
+                    return error ? ((error.error_count / totalErrors) * 100).toFixed(2) : 0;
+                }),
+                backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                pointBackgroundColor: 'rgba(75, 192, 192, 1)',
+                pointBorderColor: '#fff',
+                pointHoverBackgroundColor: '#fff',
+                pointHoverBorderColor: 'rgba(75, 192, 192, 1)',
+            }]
+        };
 
-            if (selectedUser) {
-                const totalErrors = userData.reduce((sum, item) => sum + item.error_count, 0);
-                chartData = {
-                    labels: allErrorTypes,
-                    datasets: [{
-                        label: 'エラー割合 (%)',
-                        data: allErrorTypes.map(errorType => {
-                            const error = userData.find(item => item.error_type === errorType);
-                            return error ? ((error.error_count / totalErrors) * 100).toFixed(2) : 0;
-                        }),
-                        backgroundColor: 'rgba(75, 192, 192, 0.6)',
-                        borderColor: 'rgba(75, 192, 192, 1)',
-                        pointBackgroundColor: 'rgba(75, 192, 192, 1)',
-                        pointBorderColor: '#fff',
-                        pointHoverBackgroundColor: '#fff',
-                        pointHoverBorderColor: 'rgba(75, 192, 192, 1)',
-                    }]
-                };
-                chartOptions = {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        r: {
-                            beginAtZero: true,
-                            suggestedMax: 100,
-                            ticks: {
-                                stepSize: 20,
-                                callback: function(value) {
-                                    return value + '%';
-                                }
-                            }
-                        }
-                    },
-                    plugins: {
-                        tooltip: {
-                            callbacks: {
-                                label: (context) => {
-                                    const label = context.label || '';
-                                    const value = parseFloat(context.raw).toFixed(2);
-                                    const errorCount = userData.find(item => item.error_type === label)?.error_count || 0;
-                                    return `${label}: ${value}% (${errorCount}件)`;
-                                }
-                            }
+        const chartOptions = {
+            responsive: true,
+            maintainAspectRatio: true,
+            aspectRatio: 1.5,
+            scales: {
+                r: {
+                    beginAtZero: true,
+                    suggestedMax: 100,
+                    ticks: {
+                        stepSize: 20,
+                        callback: function(value) {
+                            return value + '%';
                         }
                     }
-                };
-            } else {
-                chartData = {
-                    labels: userData.map(item => item.user_name),
-                    datasets: [{
-                        label: 'エラー回数',
-                        data: userData.map(item => item.error_count),
-                        backgroundColor: 'rgba(75, 192, 192, 0.6)',
-                        borderColor: 'rgba(75, 192, 192, 1)',
-                        borderWidth: 1
-                    }]
-                };
-                chartOptions = {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        x: {
-                            title: {
-                                display: true,
-                                text: 'ユーザー名'
-                            }
-                        },
-                        y: {
-                            title: {
-                                display: true,
-                                text: 'エラー回数'
-                            },
-                            beginAtZero: true
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: (context) => {
+                            const label = context.label || '';
+                            const value = parseFloat(context.raw).toFixed(2);
+                            const errorCount = userData.find(item => item.error_type === label)?.error_count || 0;
+                            return `${label}: ${value}% (${errorCount}件)`;
                         }
                     }
-                };
+                }
             }
+        };
 
-            if (userErrorChart) {
-                userErrorChart.destroy();
-            }
+        if (userErrorRadarChart) {
+            userErrorRadarChart.destroy();
+        }
 
-            userErrorChart = new Chart(ctx, {
-                type: chartType,
-                data: chartData,
-                options: chartOptions
-            });
+        userErrorRadarChart = new Chart(ctx, {
+            type: 'radar',
+            data: chartData,
+            options: chartOptions
         });
     }
 
@@ -177,14 +337,23 @@ document.addEventListener('DOMContentLoaded', function() {
         fetch('/error-log/users/')
             .then(response => response.json())
             .then(data => {
+                const userSelect = document.getElementById('userSelect');
+                userSelect.innerHTML = '<option value="">ユーザーを選択</option>';
                 data.forEach(user => {
                     const option = document.createElement('option');
                     option.value = user.user_name;
                     option.textContent = user.user_name;
                     userSelect.appendChild(option);
                 });
+
+                // Chọn user đầu tiên và tải dữ liệu radar chart
+                if (data.length > 0) {
+                    userSelect.value = data[0].user_name;
+                    fetchUserErrorRadarData(data[0].user_name);
+                }
             });
     }
+
 
     function fetchSummarizedErrorLogs() {
         fetch('/error-log/summarized-error-logs/')
@@ -238,5 +407,15 @@ document.addEventListener('DOMContentLoaded', function() {
             colors.push(`hsl(${(i * 360) / count}, 70%, 70%)`);
         }
         return colors;
+    }
+
+    function fetchSummaryData() {
+        fetch('/error-log/summary-data/')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('totalErrors').textContent = data.total_errors.toLocaleString();
+                document.getElementById('totalUsersWithErrors').textContent = data.total_users_with_errors.toLocaleString();
+                document.getElementById('averageErrorsPerUser').textContent = data.average_errors_per_user.toFixed(2);
+            });
     }
 });

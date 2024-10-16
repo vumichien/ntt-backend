@@ -1,7 +1,12 @@
 .chart-container {
     position: relative;
-    height: 300px;
+    height: 100%;
+    width: 100%;
     margin-bottom: 20px;
+    flex-grow: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .chart-card {
@@ -10,11 +15,15 @@
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     padding: 20px;
     margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
 }
 
 .chart-card h4 {
     color: #2A4A73;
     margin-bottom: 15px;
+    font-size: 18px;
+    font-weight: bold;
 }
 
 .table th, .table td {
@@ -46,4 +55,78 @@
 
 .pagination .page-item.disabled .page-link {
     color: #6c757d;
+}
+
+#errorTypeChart {
+    max-width: 100%;
+    max-height: 100%;
+}
+
+canvas {
+    max-width: 100%;
+    max-height: 300px;
+}
+
+.radar-chart-container {
+    height: 350px;  
+    width: 350px;  
+    margin: 0 auto;
+}
+
+.radar-chart-container canvas {
+    max-height: 100%;
+    max-width: 100%;
+}
+
+.chart-card.fixed-height {
+    height: 400px; /* Áp dụng chiều cao cố định chỉ cho các card biểu đồ */
+}
+
+.table-card {
+    min-height: 400px; /* Đặt chiều cao tối thiểu cho card chứa bảng */
+    height: auto; /* Cho phép card mở rộng theo nội dung */
+    overflow: auto; /* Thêm thanh cuộn nếu nội dung vượt quá kích thước */
+}
+
+.table-container {
+    overflow-x: auto; /* Thêm thanh cuộn ngang cho bảng nếu cần */
+}
+
+.summary-card {
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    height: 100%;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.summary-card h5 {
+    color: #2A4A73;
+    margin-bottom: 15px;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.summary-content {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+}
+
+.summary-card p {
+    font-size: 36px;
+    font-weight: bold;
+    color: #2A4A73; 
+    margin-bottom: 0;
+    margin-right: 5px;
+}
+
+.summary-card .unit {
+    font-size: 18px;
+    color: #6c757d;
+    align-self: flex-end;
 }
