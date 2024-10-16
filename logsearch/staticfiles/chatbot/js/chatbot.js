@@ -76,7 +76,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (data.show_buttons) {
                     displayConfirmationButtons();
                 } else if (data.expecting_keyword) {
-                    lastKeyword = ''; 
+                    lastKeyword = '';
                 } else if (lastKeyword === '' && data.message !== "どのキーワードでログを検索したいですか？") {
                     lastKeyword = messageToSend;  // Save the keyword
                 }
@@ -209,14 +209,14 @@ document.addEventListener('DOMContentLoaded', function() {
     function saveChatHistory() {
         const chatOutput = document.getElementById('chat-output').innerHTML;
         const timestamp = new Date().toISOString();
-        
+
         fetch('/chatbot/save-history/', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRFToken': getCookie('csrftoken'),
             },
-            body: JSON.stringify({ 
+            body: JSON.stringify({
                 chat_content: chatOutput,
                 timestamp: timestamp,
                 keyword: lastKeyword,
@@ -239,19 +239,19 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             chatHistoryList.innerHTML = '';
             const groups = {};
-            
+
             data.history.forEach(item => {
                 if (!groups[item.group]) {
                     groups[item.group] = [];
                 }
                 groups[item.group].push(item);
             });
-            
+
             for (const [group, items] of Object.entries(groups)) {
                 const groupElement = document.createElement('div');
                 groupElement.className = 'chat-history-group';
                 groupElement.innerHTML = `<h4>${group}</h4>`;
-                
+
                 const groupList = document.createElement('ul');
                 items.forEach(item => {
                     const li = document.createElement('li');
@@ -261,7 +261,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     li.onclick = () => loadChatHistory(item.filename);
                     groupList.appendChild(li);
                 });
-                
+
                 groupElement.appendChild(groupList);
                 chatHistoryList.appendChild(groupElement);
             }
@@ -295,7 +295,7 @@ document.addEventListener('DOMContentLoaded', function() {
     updateChatHistoryList();
 
     const newChatButton = document.getElementById('new-chat-button');
-    
+
     newChatButton.addEventListener('click', function() {
         // Clear the chat output
         chatOutput.innerHTML = '';
