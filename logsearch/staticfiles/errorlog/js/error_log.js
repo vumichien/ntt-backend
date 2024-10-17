@@ -373,23 +373,30 @@ document.addEventListener('DOMContentLoaded', function() {
         errorTable.innerHTML = '';
         currentRecords.forEach(log => {
             const row = errorTable.insertRow();
-            row.insertCell(0).innerHTML = `<a href="#" class="error-detail-link" data-error-type="${log.error_type}" data-actions-before="${log.actions_before_error}">${log.error_type}</a>`;
+            row.className = 'error-row';
+            row.setAttribute('data-error-type', log.error_type);
+            row.setAttribute('data-actions-before', log.actions_before_error);
+            
+            row.insertCell(0).textContent = log.error_type;
             row.insertCell(1).textContent = `${log.total_occurrences}件`;
             row.insertCell(2).textContent = log.actions_before_error.split(',').join(' ⇒ ');
             row.insertCell(3).textContent = log.user_ids;
-        });
 
-        displayPagination(totalPages);
-
-        // Add click event listeners to the error detail links
-        document.querySelectorAll('.error-detail-link').forEach(link => {
-            link.addEventListener('click', function(e) {
-                e.preventDefault();
+            row.addEventListener('click', function() {
                 const errorType = this.getAttribute('data-error-type');
                 const actionsBefore = this.getAttribute('data-actions-before');
                 showErrorDetail(errorType, actionsBefore);
             });
+
+            row.addEventListener('mouseenter', function() {
+                this.classList.add('error-row-hover');
+            });
+            row.addEventListener('mouseleave', function() {
+                this.classList.remove('error-row-hover');
+            });
         });
+
+        displayPagination(totalPages);
     }
 
     function showErrorDetail(errorType, actionsBefore) {
@@ -419,9 +426,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     extractInputData(step, index + 1, errorInputData);
                 });
 
-                // Error card
+                // Error card for error steps
                 const errorCard = createErrorCard(errorType);
                 errorStepsTimeline.appendChild(errorCard);
+
+                // Error card for recovery steps (new)
+                const recoveryErrorCard = createErrorCard(errorType);
+                recoveryErrorCard.classList.add('recovery-error-card');
+                recoveryStepsTimeline.appendChild(recoveryErrorCard);
 
                 // Recovery steps
                 data.recovery_steps.forEach((step, index) => {

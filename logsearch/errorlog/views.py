@@ -390,12 +390,17 @@ def search_error_flow(request):
         # Prepare data for all error_stats
         all_flows = []
         for error_stat in error_stats:
+            try:
+                master_log = MasterErrorLog.objects.get(id=error_stat.master_error_log.id)
+            except MasterErrorLog.DoesNotExist:
+                continue  # Bỏ qua error_stat này nếu không tìm thấy MasterErrorLog
+
             actions = error_stat.actions_before_error.split(",")
             images = error_stat.captured_images.split(",")
             flow = [
                 {
                     "explanation": action,
-                    "capimg": image,
+                    "capimg": os.path.join(master_log.business, master_log.note[:-3], image),
                     "user_name": error_stat.users.first().user_name,  # Get first user name
                     "time": error_stat.master_error_log.error_entries.first().time,  # Get the time from first log entry
                 }
@@ -448,7 +453,6 @@ def error_detail(request, error_type):
     if not error_stat:
         return Response({"error": "ErrorStatistics not found"}, status=404)
 
-    print("error_stat: ", error_stat)
     master_error_log = error_stat.master_error_log
     win_title = error_stat.win_title
 
@@ -467,7 +471,6 @@ def error_detail(request, error_type):
     recovery_steps = []
     is_error_phase = True
     last_error_action = None
-
     for entry in log_entries:
         if is_error_phase:
             if entry.error_type == error_type:
@@ -475,13 +478,13 @@ def error_detail(request, error_type):
             else:
                 last_error_action = entry.explanation
                 image_path = os.path.join(
-                    master_log.business, master_log.note[:-3], entry.capimg
+                    master_log.business, master_log.note.strip()[:-3], entry.capimg
                 )
                 step = {"capimg": image_path, "explanation": escape(entry.explanation)}
                 error_steps.append(step)
         else:
             image_path = os.path.join(
-                master_log.business, master_log.note[:-3], entry.capimg
+                master_log.business, master_log.note.strip()[:-3], entry.capimg
             )
             step = {"capimg": image_path, "explanation": escape(entry.explanation)}
             if are_actions_similar(last_error_action, entry.explanation):

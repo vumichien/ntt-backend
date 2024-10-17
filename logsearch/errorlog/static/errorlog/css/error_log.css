@@ -141,7 +141,7 @@ canvas {
     position: relative;
     padding: 20px 0;
     margin-bottom: 20px;
-    max-width: 800px; /* Thêm giới hạn chiều rộng tối đa cho timeline */
+    max-width: 800px;
     margin-left: auto;
     margin-right: auto;
 }
@@ -174,7 +174,7 @@ canvas {
     height: 40px;
     left: 6px;
     top: 0;
-    background: #007bff;
+    background: #f44336;
     border-radius: 50%;
     text-align: center;
     line-height: 40px;
@@ -316,6 +316,7 @@ canvas {
 .success-card .timeline-content {
     background-color: #e8f5e9;
     border-color: #4caf50;
+    width: 100%;
 }
 
 .error-type,
@@ -333,8 +334,81 @@ canvas {
     color: #4caf50;
 }
 
-/* Đảm bảo rằng các phần tử con của timeline-content không bị tràn */
 .timeline-content img,
 .timeline-content .text-content {
     max-width: 100%;
+}
+
+#errorStepsTimeline .timeline-content {
+    background-color: #ffebee;
+    border: 2px solid #f44336;
+}
+
+.modal-body .col-md-6 {
+    border: none;
+}
+
+.modal-body .row {
+    position: relative;
+}
+
+.modal-body .row::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 1px;
+    background-color: #dee2e6;
+}
+
+.modal-body .summary-card h5 {
+    font-size: 18px;
+}
+
+.modal-body #inputSummary,
+.modal-body #recoveryInputSummary {
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.modal-body .summary-card {
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.timeline-content {
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.error-card .timeline-content,
+.success-card .timeline-content {
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.recovery-error-card {
+    margin-bottom: 20px;
+}
+
+.recovery-error-card .timeline-content {
+    background-color: #fff3e0;
+    border: 2px solid #ff9800;
+}
+
+.recovery-error-card .error-type {
+    color: #ff9800;
+}
+
+.error-row {
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.error-row:hover {
+    background-color: #9a9494 !important;
 }
