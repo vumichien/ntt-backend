@@ -130,3 +130,18 @@ canvas {
     color: #6c757d;
     align-self: flex-end;
 }
+
+.input-data-table {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+}
+.input-data-table h4 {
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+.input-data-table p {
+    margin: 5px 0;
+}

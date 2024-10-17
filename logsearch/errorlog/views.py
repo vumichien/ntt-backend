@@ -323,20 +323,28 @@ def summarized_error_logs(request):
             ErrorStatistics.objects.prefetch_related(
                 Prefetch("users", queryset=User.objects.only("id", "user_name"))
             )
-            .values("error_type", "actions_before_error")
+            .values("error_type", "actions_before_error", "captured_images")
             .annotate(total_occurrences=Sum("occurrence_count"))
             .order_by("-total_occurrences")
         )
 
         result = []
         for stat in error_stats:
+            # Tách các actions và các images từ ErrorStatistics
+            actions = stat["actions_before_error"].split(",")
+            images = stat["captured_images"].split(",")  # Giả định captured_images được lưu như chuỗi phân cách bởi dấu phẩy
+
+
+            # Kết hợp actions và images thành flow_data
+            flow_data = [{"explanation": action, "capimg": image} for action, image in zip(actions, images)]
+
+            user_ids = set()
+            user_names = set()
             error_stat_entries = ErrorStatistics.objects.filter(
                 error_type=stat["error_type"],
                 actions_before_error=stat["actions_before_error"],
             ).prefetch_related("users")
 
-            user_ids = set()
-            user_names = set()
             for error_stat in error_stat_entries:
                 user_ids.update(error_stat.users.values_list("id", flat=True))
                 user_names.update(error_stat.users.values_list("user_name", flat=True))
@@ -347,6 +355,7 @@ def summarized_error_logs(request):
                     "total_occurrences": stat["total_occurrences"],
                     "actions_before_error": stat["actions_before_error"],
                     "user_ids": ", ".join(user_names),
+                    "flow_data": flow_data,  # Thêm thông tin flow đã ghép giữa actions và images
                 }
             )
 

@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let errorTypeBarChart, errorTypePieChart, userErrorBarChart, userErrorRadarChart;
     const userSelect = document.getElementById('userSelect');
     const errorTable = document.getElementById('errorTable').getElementsByTagName('tbody')[0];
+    const flowContainer = document.getElementById('flowContainer');
     const pagination = document.getElementById('pagination');
     let currentPage = 1;
     const recordsPerPage = 10;
@@ -377,9 +378,97 @@ document.addEventListener('DOMContentLoaded', function() {
             row.insertCell(1).textContent = `${log.total_occurrences}件`;
             row.insertCell(2).textContent = log.actions_before_error.split(',').join(' ⇒ ');
             row.insertCell(3).textContent = log.user_ids;
+
+            // Add event listener for clicking on a row to display flow
+            row.addEventListener('click', () => {
+                displayFlowForError(log.flow_data);  // Sử dụng dữ liệu flow đã có sẵn từ API
+            });
         });
 
         displayPagination(totalPages);
+    }
+
+        // Hàm hiển thị flow tương ứng sau khi lấy được từ API
+    function displayFlowForError(flowData) {
+        const flowStepsContainer = document.getElementById('flowSteps');
+        const inputDataContainer = document.getElementById('inputDataContainer');
+
+        // Xóa nội dung cũ
+        flowStepsContainer.innerHTML = '';
+        inputDataContainer.innerHTML = '';
+
+        // Thêm tiêu đề cho phần thao tác
+        const errorHeader = document.createElement('h3');
+        errorHeader.textContent = '発生前の操作';
+        errorHeader.classList.add('text-center');  // Canh giữa tiêu đề
+        flowStepsContainer.appendChild(errorHeader);
+
+        // Hiển thị các bước thao tác (flow) và hình ảnh
+        flowData.forEach((step, index) => {
+            const timelineItem = document.createElement('div');
+            timelineItem.className = "timeline-item";
+            const explanationClass = index === flowData.length - 1 ? 'last-explanation' : 'explanation';
+            timelineItem.innerHTML = `
+                <div class="timeline-content">
+                    <img src="/media/${step.capimg}" alt="Captured Image" class="captured-image">
+                    <div class="text-content">
+                        <p class="${explanationClass}">${escapeHtml(step.explanation)}</p>
+                    </div>
+                </div>
+            `;
+            flowStepsContainer.appendChild(timelineItem);
+        });
+
+        // Hiển thị Input Data ở cột bên phải
+        const inputData = extractInputDataFromFlow(flowData);
+        const inputTable = createInputDataTable(inputData);
+        inputDataContainer.appendChild(inputTable);
+    }
+
+    // Hàm để lấy InputData từ flow
+    function extractInputDataFromFlow(flowData) {
+        const inputData = [];
+
+        flowData.forEach(step => {
+            const explanation = step.explanation;
+            // Sử dụng regex để tìm các giá trị nhập trong 「」
+            const matches = explanation.match(/(?:「[^」]*」へ)?「(.+?)」を入力/);
+            if (matches && matches[1]) {
+                inputData.push(matches[1]);  // Lưu giá trị nhập vào danh sách inputData
+            }
+        });
+
+        return inputData;
+    }
+
+
+    // Hàm tạo bảng InputData
+    function createInputDataTable(inputData) {
+        const inputTable = document.createElement('div');
+        inputTable.className = 'input-data-table';
+
+        const tableTitle = document.createElement('h4');
+        tableTitle.textContent = '入力データ一覧';
+        inputTable.appendChild(tableTitle);
+
+        inputData.forEach((data, index) => {
+            const inputRow = document.createElement('p');
+            inputRow.textContent = `入力欄${index + 1}： ${data}`;
+            inputTable.appendChild(inputRow);
+        });
+
+        return inputTable;
+    }
+
+
+    // Escape HTML để an toàn khi hiển thị dữ liệu
+    function escapeHtml(unsafe) {
+        return unsafe
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
     }
 
     function displayPagination(totalPages) {

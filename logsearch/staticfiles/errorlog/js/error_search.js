@@ -66,7 +66,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function extractInputData(explanation) {
-        const inputPattern = /「(.+?)」を入力/g;  // Capture text inside 「」 before を入力
+        const inputPattern = /(?:「[^」]*」へ)?「(.+?)」を入力/g;
         let inputs = [];
         let match;
 
@@ -101,6 +101,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Function to display the error flow (capimg + explanation)
     function displayErrorFlow(flowData) {
+        console.log('Flow Data:', flowData);
          // Update header with user and time information
         const userHeader = document.getElementById('userHeader');
         const timeHeader = document.getElementById('timeHeader');
@@ -134,6 +135,9 @@ document.addEventListener('DOMContentLoaded', function() {
             `;
             timeline.appendChild(timelineItem);
         });
+
+          // Display input data table
+        displayInputData(flowData);
         errorFlow.style.display = 'block';  // Show the flow
     }
 
