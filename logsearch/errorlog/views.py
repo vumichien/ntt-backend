@@ -391,7 +391,9 @@ def search_error_flow(request):
         all_flows = []
         for error_stat in error_stats:
             try:
-                master_log = MasterErrorLog.objects.get(id=error_stat.master_error_log.id)
+                master_log = MasterErrorLog.objects.get(
+                    id=error_stat.master_error_log.id
+                )
             except MasterErrorLog.DoesNotExist:
                 continue  # Bỏ qua error_stat này nếu không tìm thấy MasterErrorLog
 
@@ -400,7 +402,9 @@ def search_error_flow(request):
             flow = [
                 {
                     "explanation": action,
-                    "capimg": os.path.join(master_log.business, master_log.note[:-3], image),
+                    "capimg": os.path.join(
+                        master_log.business, master_log.note[:-3], image
+                    ),
                     "user_name": error_stat.users.first().user_name,  # Get first user name
                     "time": error_stat.master_error_log.error_entries.first().time,  # Get the time from first log entry
                 }

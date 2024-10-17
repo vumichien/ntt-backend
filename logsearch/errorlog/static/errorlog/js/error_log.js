@@ -376,7 +376,7 @@ document.addEventListener('DOMContentLoaded', function() {
             row.className = 'error-row';
             row.setAttribute('data-error-type', log.error_type);
             row.setAttribute('data-actions-before', log.actions_before_error);
-            
+
             row.insertCell(0).textContent = log.error_type;
             row.insertCell(1).textContent = `${log.total_occurrences}件`;
             row.insertCell(2).textContent = log.actions_before_error.split(',').join(' ⇒ ');
