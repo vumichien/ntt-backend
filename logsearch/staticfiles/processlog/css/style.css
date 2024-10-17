@@ -182,9 +182,8 @@
   border-radius: 10px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
-/* Timeline content for log details */
+
 .timeline-content {
-    margin-left: 40px;
     background: #F8FAFC;
     padding: 16px;
     border-radius: 8px;
@@ -208,14 +207,12 @@
 }
 
 .timeline-item {
-    margin-bottom: 30px;
     position: relative;
     display: flex;
     justify-content: center;
-    padding-bottom: 30px; /* Thêm khoảng cách dưới mỗi item */
+    padding-bottom: 30px; 
 }
 
-/* Tạo đường mũi tên nối giữa các timeline item */
 .timeline-item::after {
     content: '';
     position: absolute;
@@ -239,13 +236,18 @@
     transform: translateX(-50%) rotate(-45deg);
 }
 
+.timeline-item::after {
+  transform: translateX(-50%);
+  height: 40px;
+  background-color: #d64550; /* Màu đỏ của đường nối */
+}
+
 /* Ẩn mũi tên cho timeline item cuối cùng */
 .timeline-item:last-child::after,
 .timeline-item:last-child::before {
     display: none;
 }
 
-/* Điều chỉnh vị trí của timeline content */
 .timeline-content {
     margin-top: 20px;
     background: #F8FAFC;
@@ -343,7 +345,7 @@
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-.chat-timeline .step-number {
+.step-number {
     position: absolute;
     top: -15px;
     left: 10px;
@@ -379,7 +381,6 @@
     line-height: 1.5;
 }
 
-/* Tạo đường mũi tên nối giữa các timeline item */
 .chat-timeline .timeline-item::after {
     content: '';
     position: absolute;
@@ -390,7 +391,6 @@
     background: #D64550;
 }
 
-/* Tạo phần đầu mũi tên */
 .chat-timeline .timeline-item::before {
     content: '';
     position: absolute;

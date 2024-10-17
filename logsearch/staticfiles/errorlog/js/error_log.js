@@ -373,14 +373,144 @@ document.addEventListener('DOMContentLoaded', function() {
         errorTable.innerHTML = '';
         currentRecords.forEach(log => {
             const row = errorTable.insertRow();
-            row.insertCell(0).textContent = log.error_type;
+            row.insertCell(0).innerHTML = `<a href="#" class="error-detail-link" data-error-type="${log.error_type}" data-actions-before="${log.actions_before_error}">${log.error_type}</a>`;
             row.insertCell(1).textContent = `${log.total_occurrences}件`;
             row.insertCell(2).textContent = log.actions_before_error.split(',').join(' ⇒ ');
             row.insertCell(3).textContent = log.user_ids;
         });
 
         displayPagination(totalPages);
+
+        // Add click event listeners to the error detail links
+        document.querySelectorAll('.error-detail-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const errorType = this.getAttribute('data-error-type');
+                const actionsBefore = this.getAttribute('data-actions-before');
+                showErrorDetail(errorType, actionsBefore);
+            });
+        });
     }
+
+    function showErrorDetail(errorType, actionsBefore) {
+        const actionsBeforeDB = actionsBefore.split(' ⇒ ').join(',');
+        const encodedActionsBefore = encodeURIComponent(actionsBeforeDB);
+        fetch(`/error-log/error-detail/${errorType}/?actions_before_error=${encodedActionsBefore}`)
+            .then(response => response.json())
+            .then(data => {
+                console.log("data from server", data);
+                const errorStepsTimeline = document.getElementById('errorStepsTimeline');
+                const recoveryStepsTimeline = document.getElementById('recoveryStepsTimeline');
+                errorStepsTimeline.innerHTML = '';
+                recoveryStepsTimeline.innerHTML = '';
+
+                const inputSummary = document.getElementById('inputSummary');
+                const recoveryInputSummary = document.getElementById('recoveryInputSummary');
+                inputSummary.innerHTML = '';
+                recoveryInputSummary.innerHTML = '';
+
+                const errorInputData = [];
+                const recoveryInputData = [];
+
+                // Error steps
+                data.error_steps.forEach((step, index) => {
+                    const timelineItem = createTimelineItem(step, index + 1);
+                    errorStepsTimeline.appendChild(timelineItem);
+                    extractInputData(step, index + 1, errorInputData);
+                });
+
+                // Error card
+                const errorCard = createErrorCard(errorType);
+                errorStepsTimeline.appendChild(errorCard);
+
+                // Recovery steps
+                data.recovery_steps.forEach((step, index) => {
+                    const timelineItem = createTimelineItem(step, index + 1, true);
+                    recoveryStepsTimeline.appendChild(timelineItem);
+                    extractInputData(step, index + 1, recoveryInputData);
+                });
+
+                // Success card
+                const successCard = createSuccessCard();
+                recoveryStepsTimeline.appendChild(successCard);
+
+                // Display input summaries
+                displayInputSummary(inputSummary, errorInputData);
+                displayInputSummary(recoveryInputSummary, recoveryInputData);
+
+                const modal = new bootstrap.Modal(document.getElementById('errorDetailModal'));
+                modal.show();
+            })
+            .catch(error => console.error('Error:', error));
+    }
+
+    function createTimelineItem(step, index, isRecovery = false) {
+        const timelineItem = document.createElement('div');
+        timelineItem.className = `timeline-item ${isRecovery ? 'recovery-step' : ''}`;
+        timelineItem.innerHTML = `
+            <div class="timeline-content">
+                <div class="step-number">操作 ${index}</div>
+                <img src="/media/${step.capimg}" alt="Captured" class="captured-image">
+                <div class="text-content">
+                    <p class="explanation">${step.explanation}</p>
+                </div>
+            </div>
+        `;
+        return timelineItem;
+    }
+
+    function createErrorCard(errorType) {
+        const errorCard = document.createElement('div');
+        errorCard.className = "timeline-item error-card";
+        errorCard.innerHTML = `
+            <div class="timeline-content">
+                <p class="error-type">${errorType}</p>
+            </div>
+        `;
+        return errorCard;
+    }
+
+    function createSuccessCard() {
+        const successCard = document.createElement('div');
+        successCard.className = "timeline-item success-card";
+        successCard.innerHTML = `
+            <div class="timeline-content">
+                <p class="success-type">Success</p>
+            </div>
+        `;
+        return successCard;
+    }
+
+    function extractInputData(step, index, inputData) {
+        const match = step.explanation.match(/「(.+?)」を入力する/);
+        if (match) {
+            inputData.push(`操作 ${index}：${match[1]}`);
+        }
+    }
+
+    function displayInputSummary(summaryElement, inputData) {
+        if (inputData.length > 0) {
+            summaryElement.innerHTML = inputData.map(item => {
+                const [operation, value] = item.split('：');
+                return `${operation}：${value.replace(/^.+?」へ「/, '')}`;
+            }).join('<br>');
+        } else {
+            summaryElement.innerHTML = '入力データなし';
+        }
+    }
+
+    // Thêm event listener cho nút đóng modal
+    document.addEventListener('DOMContentLoaded', function() {
+        const closeButton = document.querySelector('#errorDetailModal .btn-close');
+        if (closeButton) {
+            closeButton.addEventListener('click', function() {
+                const modal = bootstrap.Modal.getInstance(document.getElementById('errorDetailModal'));
+                if (modal) {
+                    modal.hide();
+                }
+            });
+        }
+    });
 
     function displayPagination(totalPages) {
         pagination.innerHTML = '';

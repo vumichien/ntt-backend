@@ -92,6 +92,42 @@
         </div>
     </div>
 </div>
+
+<!-- Add a modal for displaying error details -->
+<div class="modal fade" id="errorDetailModal" tabindex="-1" role="dialog" aria-labelledby="errorDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="errorDetailModalLabel">エラー詳細</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>発生前の操作</h6>
+                        <div class="summary-card mb-4">
+                            <h5>入力データ一覧</h5>
+                            <div id="inputSummary"></div>
+                        </div>
+                        <div id="errorStepsTimeline" class="timeline">
+                            <!-- Error steps will be inserted here -->
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>回避策</h6>
+                        <div class="summary-card mb-4">
+                            <h5>入力データ一覧</h5>
+                            <div id="recoveryInputSummary"></div>
+                        </div>
+                        <div id="recoveryStepsTimeline" class="timeline">
+                            <!-- Recovery steps will be inserted here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}

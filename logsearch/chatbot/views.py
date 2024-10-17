@@ -184,7 +184,7 @@ def render_procedure_timeline(procedure_steps):
     for i, step in enumerate(procedure_steps, start=1):
         step_html = f"""
         <div class="timeline-item">
-            <div class="step-number">ステップ {i}</div>
+            <div class="step-number">操作 {i}</div>
             <div class="timeline-content">
                 <img src="/media/{step['capimg']}" alt="Captured" class="captured-image">
                 <div class="text-content">

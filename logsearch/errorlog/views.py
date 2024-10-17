@@ -4,11 +4,13 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.utils import timezone
 from django.db.models import Sum, F, Prefetch, Count, Avg
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
+from django.utils.html import escape
 
 import os
 import pandas as pd
 from datetime import datetime
+import re
 
 from .models import MasterErrorLog, ErrorLog, ErrorStatistics, User
 
@@ -239,9 +241,7 @@ def error_type_statistics(request):
 
 @api_view(["GET"])
 def user_error_statistics(request, user_name=None):
-    all_error_types = ErrorStatistics.objects.values_list(
-        "error_type", flat=True
-    ).distinct()
+    all_error_types = ErrorStatistics.objects.values_list("error_type", flat=True).distinct()
 
     if user_name:
         # Logic cho radar chart
@@ -250,9 +250,7 @@ def user_error_statistics(request, user_name=None):
             .values("error_type")
             .annotate(error_count=Sum("occurrence_count"))
         )
-        user_error_dict = {
-            item["error_type"]: item["error_count"] for item in user_errors
-        }
+        user_error_dict = {item["error_type"]: item["error_count"] for item in user_errors}
         result = [
             {
                 "error_type": error_type,
@@ -262,24 +260,27 @@ def user_error_statistics(request, user_name=None):
         ]
     else:
         # Logic cho bubble chart
-        user_error_counts = ErrorStatistics.objects.values("users").annotate(
-            total_errors=Sum("occurrence_count")
+        user_error_counts = ErrorStatistics.objects.values('users').annotate(
+            total_errors=Sum('occurrence_count')
         )
 
         error_distribution = {}
         for item in user_error_counts:
-            total_errors = item["total_errors"]
+            total_errors = item['total_errors']
             if total_errors in error_distribution:
                 error_distribution[total_errors] += 1
             else:
                 error_distribution[total_errors] = 1
 
         result = [
-            {"error_count": error_count, "user_count": user_count}
+            {
+                "error_count": error_count,
+                "user_count": user_count
+            }
             for error_count, user_count in error_distribution.items()
         ]
 
-        result.sort(key=lambda x: x["error_count"])
+        result.sort(key=lambda x: x['error_count'])
 
     return Response(result)
 
@@ -404,24 +405,105 @@ def search_error_flow(request):
 @api_view(["GET"])
 def summary_data(request):
     try:
-        total_errors = ErrorStatistics.objects.aggregate(Sum("occurrence_count"))[
-            "occurrence_count__sum"
-        ]
-        total_users_with_errors = (
-            User.objects.filter(errorstatistics__isnull=False).distinct().count()
-        )
-        average_errors_per_user = (
-            ErrorStatistics.objects.values("users")
-            .annotate(error_count=Sum("occurrence_count"))
-            .aggregate(Avg("error_count"))["error_count__avg"]
-        )
+        total_errors = ErrorStatistics.objects.aggregate(Sum('occurrence_count'))['occurrence_count__sum']
+        total_users_with_errors = User.objects.filter(errorstatistics__isnull=False).distinct().count()
+        average_errors_per_user = ErrorStatistics.objects.values('users').annotate(
+            error_count=Sum('occurrence_count')
+        ).aggregate(Avg('error_count'))['error_count__avg']
 
-        return Response(
-            {
-                "total_errors": total_errors,
-                "total_users_with_errors": total_users_with_errors,
-                "average_errors_per_user": average_errors_per_user or 0,
-            }
-        )
+        return Response({
+            'total_errors': total_errors,
+            'total_users_with_errors': total_users_with_errors,
+            'average_errors_per_user': average_errors_per_user or 0
+        })
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(["GET"])
+def error_detail(request, error_type):
+    # Lấy actions_before_error từ request
+    actions_before_error = request.GET.get('actions_before_error', '')
+
+    # Tìm ErrorStatistics dựa trên error_type và actions_before_error
+    error_stat = ErrorStatistics.objects.filter(
+        error_type=error_type, 
+        actions_before_error=actions_before_error
+    ).first()
+
+    if not error_stat:
+        return Response({"error": "ErrorStatistics not found"}, status=404)
+
+    print("error_stat: ", error_stat)
+    master_error_log = error_stat.master_error_log
+    win_title = error_stat.win_title
+
+    # Lấy thông tin từ MasterErrorLog
+    try:
+        master_log = MasterErrorLog.objects.get(id=master_error_log.id)
+    except MasterErrorLog.DoesNotExist:
+        return Response({"error": "MasterErrorLog not found"}, status=404)
+
+    # Lấy tất cả các ErrorLog liên quan đến master_log và win_title
+    log_entries = ErrorLog.objects.filter(
+        master_error_log=master_error_log,
+        win_title=win_title
+    ).order_by('time')
+
+    error_steps = []
+    recovery_steps = []
+    is_error_phase = True
+    last_error_action = None
+
+    for entry in log_entries:
+        if is_error_phase:
+            if entry.error_type == error_type:
+                is_error_phase = False
+            else:
+                last_error_action = entry.explanation
+                image_path = os.path.join(
+                    master_log.business,
+                    master_log.note[:-3],
+                    entry.capimg
+                )
+                step = {
+                    'capimg': image_path,
+                    'explanation': escape(entry.explanation)
+                }
+                error_steps.append(step)
+        else:
+            image_path = os.path.join(
+                    master_log.business,
+                    master_log.note[:-3],
+                    entry.capimg
+            )
+            step = {
+                'capimg': image_path,
+                'explanation': escape(entry.explanation)
+            }
+            if are_actions_similar(last_error_action, entry.explanation):
+                recovery_steps.append(step)
+                break
+            recovery_steps.append(step)
+
+    return Response({
+        'error_type': error_type,
+        'error_steps': error_steps,
+        'recovery_steps': recovery_steps
+    })
+
+def are_actions_similar(action1, action2):
+    # Extract the parts inside 「」
+    parts1 = re.findall(r'「(.+?)」', action1)
+    parts2 = re.findall(r'「(.+?)」', action2)
+    
+    # If the number of parts is different, they are not similar
+    if len(parts1) != len(parts2):
+        return False
+    
+    # Compare all parts except the second one (index 1)
+    for i in range(len(parts1)):
+        if i != 1 and parts1[i] != parts2[i]:
+            return False
+    
+    return True
