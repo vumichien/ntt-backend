@@ -39,4 +39,5 @@ urlpatterns = [
     path("error-search/", views.error_search, name="error-search"),
     path("search-flow/", views.search_error_flow, name="search-flow"),
     path("summary-data/", views.summary_data, name="summary_data"),
+    path("error-detail/<str:error_type>/", views.error_detail, name="error-detail"),
 ]

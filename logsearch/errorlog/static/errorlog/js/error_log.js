@@ -2,7 +2,6 @@ document.addEventListener('DOMContentLoaded', function() {
     let errorTypeBarChart, errorTypePieChart, userErrorBarChart, userErrorRadarChart;
     const userSelect = document.getElementById('userSelect');
     const errorTable = document.getElementById('errorTable').getElementsByTagName('tbody')[0];
-    const flowContainer = document.getElementById('flowContainer');
     const pagination = document.getElementById('pagination');
     let currentPage = 1;
     const recordsPerPage = 10;
@@ -374,102 +373,156 @@ document.addEventListener('DOMContentLoaded', function() {
         errorTable.innerHTML = '';
         currentRecords.forEach(log => {
             const row = errorTable.insertRow();
+            row.className = 'error-row';
+            row.setAttribute('data-error-type', log.error_type);
+            row.setAttribute('data-actions-before', log.actions_before_error);
+
             row.insertCell(0).textContent = log.error_type;
             row.insertCell(1).textContent = `${log.total_occurrences}件`;
             row.insertCell(2).textContent = log.actions_before_error.split(',').join(' ⇒ ');
             row.insertCell(3).textContent = log.user_ids;
 
-            // Add event listener for clicking on a row to display flow
-            row.addEventListener('click', () => {
-                displayFlowForError(log.flow_data);  // Sử dụng dữ liệu flow đã có sẵn từ API
+            row.addEventListener('click', function() {
+                const errorType = this.getAttribute('data-error-type');
+                const actionsBefore = this.getAttribute('data-actions-before');
+                showErrorDetail(errorType, actionsBefore);
+            });
+
+            row.addEventListener('mouseenter', function() {
+                this.classList.add('error-row-hover');
+            });
+            row.addEventListener('mouseleave', function() {
+                this.classList.remove('error-row-hover');
             });
         });
 
         displayPagination(totalPages);
     }
 
-        // Hàm hiển thị flow tương ứng sau khi lấy được từ API
-    function displayFlowForError(flowData) {
-        const flowStepsContainer = document.getElementById('flowSteps');
-        const inputDataContainer = document.getElementById('inputDataContainer');
+    function showErrorDetail(errorType, actionsBefore) {
+        const actionsBeforeDB = actionsBefore.split(' ⇒ ').join(',');
+        const encodedActionsBefore = encodeURIComponent(actionsBeforeDB);
+        fetch(`/error-log/error-detail/${errorType}/?actions_before_error=${encodedActionsBefore}`)
+            .then(response => response.json())
+            .then(data => {
+                console.log("data from server", data);
+                const errorStepsTimeline = document.getElementById('errorStepsTimeline');
+                const recoveryStepsTimeline = document.getElementById('recoveryStepsTimeline');
+                errorStepsTimeline.innerHTML = '';
+                recoveryStepsTimeline.innerHTML = '';
 
-        // Xóa nội dung cũ
-        flowStepsContainer.innerHTML = '';
-        inputDataContainer.innerHTML = '';
+                const inputSummary = document.getElementById('inputSummary');
+                const recoveryInputSummary = document.getElementById('recoveryInputSummary');
+                inputSummary.innerHTML = '';
+                recoveryInputSummary.innerHTML = '';
 
-        // Thêm tiêu đề cho phần thao tác
-        const errorHeader = document.createElement('h3');
-        errorHeader.textContent = '発生前の操作';
-        errorHeader.classList.add('text-center');  // Canh giữa tiêu đề
-        flowStepsContainer.appendChild(errorHeader);
+                const errorInputData = [];
+                const recoveryInputData = [];
 
-        // Hiển thị các bước thao tác (flow) và hình ảnh
-        flowData.forEach((step, index) => {
-            const timelineItem = document.createElement('div');
-            timelineItem.className = "timeline-item";
-            const explanationClass = index === flowData.length - 1 ? 'last-explanation' : 'explanation';
-            timelineItem.innerHTML = `
-                <div class="timeline-content">
-                    <img src="/media/${step.capimg}" alt="Captured Image" class="captured-image">
-                    <div class="text-content">
-                        <p class="${explanationClass}">${escapeHtml(step.explanation)}</p>
-                    </div>
+                // Error steps
+                data.error_steps.forEach((step, index) => {
+                    const timelineItem = createTimelineItem(step, index + 1);
+                    errorStepsTimeline.appendChild(timelineItem);
+                    extractInputData(step, index + 1, errorInputData);
+                });
+
+                // Error card for error steps
+                const errorCard = createErrorCard(errorType);
+                errorStepsTimeline.appendChild(errorCard);
+
+                // Error card for recovery steps (new)
+                const recoveryErrorCard = createErrorCard(errorType);
+                recoveryErrorCard.classList.add('recovery-error-card');
+                recoveryStepsTimeline.appendChild(recoveryErrorCard);
+
+                // Recovery steps
+                data.recovery_steps.forEach((step, index) => {
+                    const timelineItem = createTimelineItem(step, index + 1, true);
+                    recoveryStepsTimeline.appendChild(timelineItem);
+                    extractInputData(step, index + 1, recoveryInputData);
+                });
+
+                // Success card
+                const successCard = createSuccessCard();
+                recoveryStepsTimeline.appendChild(successCard);
+
+                // Display input summaries
+                displayInputSummary(inputSummary, errorInputData);
+                displayInputSummary(recoveryInputSummary, recoveryInputData);
+
+                const modal = new bootstrap.Modal(document.getElementById('errorDetailModal'));
+                modal.show();
+            })
+            .catch(error => console.error('Error:', error));
+    }
+
+    function createTimelineItem(step, index, isRecovery = false) {
+        const timelineItem = document.createElement('div');
+        timelineItem.className = `timeline-item ${isRecovery ? 'recovery-step' : ''}`;
+        timelineItem.innerHTML = `
+            <div class="timeline-content">
+                <div class="step-number">操作 ${index}</div>
+                <img src="/media/${step.capimg}" alt="Captured" class="captured-image">
+                <div class="text-content">
+                    <p class="explanation">${step.explanation}</p>
                 </div>
-            `;
-            flowStepsContainer.appendChild(timelineItem);
-        });
-
-        // Hiển thị Input Data ở cột bên phải
-        const inputData = extractInputDataFromFlow(flowData);
-        const inputTable = createInputDataTable(inputData);
-        inputDataContainer.appendChild(inputTable);
+            </div>
+        `;
+        return timelineItem;
     }
 
-    // Hàm để lấy InputData từ flow
-    function extractInputDataFromFlow(flowData) {
-        const inputData = [];
-
-        flowData.forEach(step => {
-            const explanation = step.explanation;
-            // Sử dụng regex để tìm các giá trị nhập trong 「」
-            const matches = explanation.match(/(?:「[^」]*」へ)?「(.+?)」を入力/);
-            if (matches && matches[1]) {
-                inputData.push(matches[1]);  // Lưu giá trị nhập vào danh sách inputData
-            }
-        });
-
-        return inputData;
+    function createErrorCard(errorType) {
+        const errorCard = document.createElement('div');
+        errorCard.className = "timeline-item error-card";
+        errorCard.innerHTML = `
+            <div class="timeline-content">
+                <p class="error-type">${errorType}</p>
+            </div>
+        `;
+        return errorCard;
     }
 
-
-    // Hàm tạo bảng InputData
-    function createInputDataTable(inputData) {
-        const inputTable = document.createElement('div');
-        inputTable.className = 'input-data-table';
-
-        const tableTitle = document.createElement('h4');
-        tableTitle.textContent = '入力データ一覧';
-        inputTable.appendChild(tableTitle);
-
-        inputData.forEach((data, index) => {
-            const inputRow = document.createElement('p');
-            inputRow.textContent = `入力欄${index + 1}： ${data}`;
-            inputTable.appendChild(inputRow);
-        });
-
-        return inputTable;
+    function createSuccessCard() {
+        const successCard = document.createElement('div');
+        successCard.className = "timeline-item success-card";
+        successCard.innerHTML = `
+            <div class="timeline-content">
+                <p class="success-type">Success</p>
+            </div>
+        `;
+        return successCard;
     }
 
-
-    // Escape HTML để an toàn khi hiển thị dữ liệu
-    function escapeHtml(unsafe) {
-        return unsafe
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
+    function extractInputData(step, index, inputData) {
+        const match = step.explanation.match(/「(.+?)」を入力する/);
+        if (match) {
+            inputData.push(`操作 ${index}：${match[1]}`);
+        }
     }
+
+    function displayInputSummary(summaryElement, inputData) {
+        if (inputData.length > 0) {
+            summaryElement.innerHTML = inputData.map(item => {
+                const [operation, value] = item.split('：');
+                return `${operation}：${value.replace(/^.+?」へ「/, '')}`;
+            }).join('<br>');
+        } else {
+            summaryElement.innerHTML = '入力データなし';
+        }
+    }
+
+    // Thêm event listener cho nút đóng modal
+    document.addEventListener('DOMContentLoaded', function() {
+        const closeButton = document.querySelector('#errorDetailModal .btn-close');
+        if (closeButton) {
+            closeButton.addEventListener('click', function() {
+                const modal = bootstrap.Modal.getInstance(document.getElementById('errorDetailModal'));
+                if (modal) {
+                    modal.hide();
+                }
+            });
+        }
+    });
 
     function displayPagination(totalPages) {
         pagination.innerHTML = '';
