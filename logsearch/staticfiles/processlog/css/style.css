@@ -408,3 +408,51 @@
 .chat-timeline .timeline-item:last-child::before {
     display: none;
 }
+
+/* Style for the arrow buttons in error search */
+#leftArrow, #rightArrow {
+    width: 100%;
+    height: 100%;
+    font-size: 24px;
+}
+
+#leftArrow {
+    margin-left: 10px;
+}
+
+#rightArrow {
+    margin-right: 10px;
+}
+
+/* Adjust the timeline container */
+#timeline {
+    max-height: 600px; /* Adjust as needed */
+    overflow-y: auto;
+    padding: 0 10px;
+}
+
+/* Ensure the arrows are vertically centered */
+.d-flex.align-items-center.justify-content-center {
+    height: 100%;
+}
+
+#errorHeader {
+    text-align: center;
+    margin-bottom: 20px; /* Thêm khoảng cách phía dưới nếu cần */
+}
+
+.input-data-table {
+    background-color: #f9f9f9;
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.input-data-table h4 {
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+.input-data-table table {
+    width: 100%;
+}
