@@ -346,7 +346,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     userSelect.appendChild(option);
                 });
 
-                // Chọn user đầu tiên và tải dữ liệu radar chart
                 if (data.length > 0) {
                     userSelect.value = data[0].user_name;
                     fetchUserErrorRadarData(data[0].user_name);
