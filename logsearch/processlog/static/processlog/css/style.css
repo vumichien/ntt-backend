@@ -66,11 +66,10 @@
   padding: 20px;
 }
 
-/* Thêm các styles mới này */
 .card-body p,
 .card-body div {
-  line-height: 1.4; /* Giảm khoảng cách giữa các dòng */
-  margin-bottom: 0.5rem; /* Giảm khoảng cách dưới mỗi đoạn */
+  line-height: 1.4;
+  margin-bottom: 0.5rem;
 }
 
 .card-body h1,
@@ -79,12 +78,12 @@
 .card-body h4,
 .card-body h5,
 .card-body h6 {
-  margin-bottom: 0.75rem; /* Giảm khoảng cách dưới các tiêu đề */
+  margin-bottom: 0.75rem;
 }
 
 .card-title {
   font-size: 1.25rem;
-  margin-bottom: 15px; /* Giảm từ 20px xuống 15px */
+  margin-bottom: 15px;
 }
 
 /* Form input */
@@ -192,7 +191,7 @@
     flex-direction: column;
     align-items: center;
     max-width: 100%;
-    position: relative; /* Thêm vị trí tương đối */
+    position: relative;
 }
 
 /* Ensure the images are responsive and don't grow too large */
@@ -223,7 +222,6 @@
     background: #D64550;
 }
 
-/* Tạo phần đầu mũi tên */
 .timeline-item::before {
     content: '';
     position: absolute;
@@ -239,10 +237,9 @@
 .timeline-item::after {
   transform: translateX(-50%);
   height: 40px;
-  background-color: #d64550; /* Màu đỏ của đường nối */
+  background-color: #d64550;
 }
 
-/* Ẩn mũi tên cho timeline item cuối cùng */
 .timeline-item:last-child::after,
 .timeline-item:last-child::before {
     display: none;
@@ -317,7 +314,7 @@
   background-color: #fff;
   border-color: #dee2e6 #dee2e6 #fff;
   font-weight: 700;
-  border-bottom: 3px solid #2A4A73;  /* Thêm đường gạch dưới đậm */
+  border-bottom: 3px solid #2A4A73;
 }
 
 .timeline-arrow .error-content {
@@ -395,7 +392,7 @@
     content: '';
     position: absolute;
     left: 50%;
-    bottom: -15px; /* Điều chỉnh vị trí lên trên */
+    bottom: -15px;
     width: 10px;
     height: 10px;
     border-left: 2px solid #D64550;
@@ -403,13 +400,11 @@
     transform: translateX(-50%) rotate(-45deg);
 }
 
-/* Ẩn mũi tên cho timeline item cuối cùng */
 .chat-timeline .timeline-item:last-child::after,
 .chat-timeline .timeline-item:last-child::before {
     display: none;
 }
 
-/* Style for the arrow buttons in error search */
 #leftArrow, #rightArrow {
     width: 100%;
     height: 100%;
@@ -438,7 +433,7 @@
 
 #errorHeader {
     text-align: center;
-    margin-bottom: 20px; /* Thêm khoảng cách phía dưới nếu cần */
+    margin-bottom: 20px;
 }
 
 .input-data-table {

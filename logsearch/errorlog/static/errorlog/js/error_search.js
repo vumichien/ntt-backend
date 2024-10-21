@@ -70,9 +70,8 @@ document.addEventListener('DOMContentLoaded', function() {
         let inputs = [];
         let match;
 
-        // Sử dụng vòng lặp để tìm các khớp (match) cho mỗi lần xuất hiện của biểu thức
         while ((match = inputPattern.exec(explanation)) !== null) {
-            inputs.push(match[1]);  // Lấy giá trị input giữa 「」 (ở vị trí thứ hai trong match)
+            inputs.push(match[1]);
         }
 
         console.log('Extracted Inputs:', inputs);

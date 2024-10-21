@@ -48,7 +48,6 @@ document.addEventListener('DOMContentLoaded', function() {
             `;
             timeline.appendChild(timelineItem);
 
-            // Thêm mũi tên sau mỗi bước, ngoại trừ bước cuối cùng
             if (index < steps.length - 1) {
                 const arrow = document.createElement('div');
                 arrow.className = "timeline-arrow";

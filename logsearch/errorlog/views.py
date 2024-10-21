@@ -455,10 +455,8 @@ def summary_data(request):
 
 @api_view(["GET"])
 def error_detail(request, error_type):
-    # Lấy actions_before_error từ request
     actions_before_error = request.GET.get("actions_before_error", "")
 
-    # Tìm ErrorStatistics dựa trên error_type và actions_before_error
     error_stat = ErrorStatistics.objects.filter(
         error_type=error_type, actions_before_error=actions_before_error
     ).first()
@@ -469,13 +467,11 @@ def error_detail(request, error_type):
     master_error_log = error_stat.master_error_log
     win_title = error_stat.win_title
 
-    # Lấy thông tin từ MasterErrorLog
     try:
         master_log = MasterErrorLog.objects.get(id=master_error_log.id)
     except MasterErrorLog.DoesNotExist:
         return Response({"error": "MasterErrorLog not found"}, status=404)
 
-    # Lấy tất cả các ErrorLog liên quan đến master_log và win_title
     log_entries = ErrorLog.objects.filter(
         master_error_log=master_error_log, win_title=win_title
     ).order_by("time")
