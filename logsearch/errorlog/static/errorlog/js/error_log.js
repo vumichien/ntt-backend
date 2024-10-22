@@ -259,7 +259,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 tooltip: {
                     callbacks: {
                         label: function(context) {
-                            return `${context.parsed.y}人`;
+                            return `${context.parsed.y}人-${context.parsed.x}数`;
                         }
                     }
                 },
@@ -389,9 +389,9 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(data => {
                 if (data.length > 0) {
-                    errorTable.style.display = 'table'; // Hiển thị bảng khi có dữ liệu
+                    errorTable.style.display = 'table';
                 } else {
-                    errorTable.style.display = 'none'; // Ẩn bảng nếu không có kết quả
+                    errorTable.style.display = 'none';
                 }
                 displayErrorLogs(data);
             });
@@ -402,9 +402,9 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(data => {
                 if (data.length > 0) {
-                    errorTable.style.display = 'table'; // Hiển thị bảng khi có dữ liệu
+                    errorTable.style.display = 'table';
                 } else {
-                    errorTable.style.display = 'none'; // Ẩn bảng nếu không có kết quả
+                    errorTable.style.display = 'none';
                 }
                 displayErrorLogs(data);
             });
@@ -427,18 +427,16 @@ document.addEventListener('DOMContentLoaded', function() {
             row.insertCell(1).textContent = `${log.total_occurrences}件`;
             row.insertCell(2).textContent = log.actions_before_error.split(',').join(' ⇒ ');
 
-            // Tạo danh sách user name, giới hạn hiển thị 2 user đầu tiên và dấu "..."
             const users = log.user_ids.split(', ');
             let displayedUsers = users.slice(0, 2).join(', ');
             if (users.length > 2) {
-                displayedUsers += ', ...';  // Thêm dấu "..." nếu danh sách quá dài
+                displayedUsers += ', ...';
             }
             const userCell = row.insertCell(3);
             userCell.textContent = displayedUsers;
 
-            // Thêm tooltip để hiển thị danh sách đầy đủ khi hover vào
             if (users.length > 2) {
-                userCell.title = users.join(', ');  // Danh sách đầy đủ khi hover
+                userCell.title = users.join(', ');
             }
 
             row.addEventListener('click', function() {
@@ -571,7 +569,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Thêm event listener cho nút đóng modal
     document.addEventListener('DOMContentLoaded', function() {
         const closeButton = document.querySelector('#errorDetailModal .btn-close');
         if (closeButton) {
@@ -598,20 +595,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 currentPage = i;
                 const errorType = filterErrorTypeInput.value.trim();
                 const procedure = filterProcedureInput.value.trim();
-                fetchFilteredErrorLogs(errorType, procedure); // Lọc lại với trang hiện tại
+                fetchFilteredErrorLogs(errorType, procedure);
 
             });
             li.appendChild(a);
             pagination.appendChild(li);
         }
-    }
-
-    function generateColors(count) {
-        const colors = [];
-        for (let i = 0; i < count; i++) {
-            colors.push(`hsl(${(i * 360) / count}, 70%, 70%)`);
-        }
-        return colors;
     }
 
     function fetchSummaryData() {
@@ -797,7 +786,7 @@ document.addEventListener('DOMContentLoaded', function() {
             scales: {
                 y: {
                     beginAtZero: true,
-                    max: maxOccurrence + 1,
+                    max: maxOccurrence + 10,
                     ticks: {
                         stepSize: 1,
                         precision: 0
