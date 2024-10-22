@@ -288,10 +288,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 1000);
     }
 
-    // Thêm event listener cho input để reset timeout
     userInput.addEventListener('input', resetSaveTimeout);
 
-    // Cập nhật danh sách lịch sử chat khi trang được tải
     updateChatHistoryList();
 
     const newChatButton = document.getElementById('new-chat-button');

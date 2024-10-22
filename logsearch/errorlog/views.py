@@ -1,11 +1,12 @@
 from django.conf import settings
-from rest_framework.decorators import api_view
-from rest_framework.response import Response
-from rest_framework import status
 from django.utils import timezone
 from django.db.models import Sum, F, Prefetch, Count, Avg
 from django.shortcuts import render, get_object_or_404
 from django.utils.html import escape
+from django.http import JsonResponse
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework import status
 
 import os
 import pandas as pd
@@ -321,8 +322,8 @@ def error_details(request, error_type):
 @api_view(["GET"])
 def summarized_error_logs(request):
     try:
-        error_type_filter = request.GET.get('error_type', '').strip()
-        procedure_filter = request.GET.get('procedure', '').strip()
+        error_type_filter = request.GET.get("error_type", "").strip()
+        procedure_filter = request.GET.get("procedure", "").strip()
 
         # Fetch và group các ErrorStatistics theo error_type và actions_before_error
         error_stats = ErrorStatistics.objects.prefetch_related(
@@ -332,7 +333,9 @@ def summarized_error_logs(request):
         if error_type_filter:
             error_stats = error_stats.filter(error_type__icontains=error_type_filter)
         if procedure_filter:
-            error_stats = error_stats.filter(actions_before_error__icontains=procedure_filter)
+            error_stats = error_stats.filter(
+                actions_before_error__icontains=procedure_filter
+            )
 
         # Group lại theo error_type và actions_before_error, tổng hợp dữ liệu
         grouped_stats = {}
@@ -343,33 +346,46 @@ def summarized_error_logs(request):
                     "error_type": stat.error_type,
                     "actions_before_error": stat.actions_before_error,
                     "total_occurrences": stat.total_occurrences,
-                    "users": set(stat.users.values_list('user_name', flat=True))  # Tập hợp các user name
+                    "users": set(
+                        stat.users.values_list("user_name", flat=True)
+                    ),  # Tập hợp các user name
                 }
             else:
                 grouped_stats[key]["total_occurrences"] += stat.total_occurrences
-                grouped_stats[key]["users"].update(stat.users.values_list('user_name', flat=True))
+                grouped_stats[key]["users"].update(
+                    stat.users.values_list("user_name", flat=True)
+                )
 
         # Chuẩn bị kết quả để trả về
         result = []
         for key, stat in grouped_stats.items():
             actions = stat["actions_before_error"].split(",")
-            images = stat.get("captured_images", "").split(",") if "captured_images" in stat else []
-            flow_data = [{"explanation": action, "capimg": image} for action, image in zip(actions, images)]
+            images = (
+                stat.get("captured_images", "").split(",")
+                if "captured_images" in stat
+                else []
+            )
+            flow_data = [
+                {"explanation": action, "capimg": image}
+                for action, image in zip(actions, images)
+            ]
 
-            result.append({
-                "error_type": stat["error_type"],
-                "total_occurrences": stat["total_occurrences"],
-                "actions_before_error": stat["actions_before_error"],
-                "user_ids": ", ".join(stat["users"]),  # Nối danh sách user_name thành chuỗi
-                "flow_data": flow_data,
-            })
+            result.append(
+                {
+                    "error_type": stat["error_type"],
+                    "total_occurrences": stat["total_occurrences"],
+                    "actions_before_error": stat["actions_before_error"],
+                    "user_ids": ", ".join(
+                        stat["users"]
+                    ),  # Nối danh sách user_name thành chuỗi
+                    "flow_data": flow_data,
+                }
+            )
 
         return Response(result, status=status.HTTP_200_OK)
 
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
 
 
 # View to render the error search page
@@ -530,3 +546,17 @@ def are_actions_similar(action1, action2):
             return False
 
     return True
+
+
+def error_action_statistics(request):
+    error_types = ErrorStatistics.objects.values("error_type").distinct()
+    data = []
+    for error_type in error_types:
+        actions = (
+            ErrorStatistics.objects.filter(error_type=error_type["error_type"])
+            .values("actions_before_error")
+            .annotate(occurrence_count=Count("id"))
+            .order_by("actions_before_error")
+        )
+        data.append({"error_type": error_type["error_type"], "actions": list(actions)})
+    return JsonResponse(data, safe=False)
