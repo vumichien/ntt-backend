@@ -19,6 +19,8 @@ document.addEventListener('DOMContentLoaded', function() {
     fetchUsers();
     fetchSummaryData();
     fetchErrorActionData();
+     // Hiển thị dữ liệu mặc định khi load trang
+    fetchSummarizedErrorLogs();
 
     userSelect.addEventListener('change', () => fetchUserErrorRadarData(userSelect.value));
 
@@ -28,6 +30,18 @@ document.addEventListener('DOMContentLoaded', function() {
         const procedure = filterProcedureInput.value.trim();
         currentPage = 1; // Reset trang về 1 khi filter
         fetchFilteredErrorLogs(errorType, procedure);
+    });
+
+    // Thêm sự kiện khi ấn Enter trong ô nhập để kích hoạt lọc
+    [filterErrorTypeInput, filterProcedureInput].forEach(input => {
+        input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const errorType = filterErrorTypeInput.value.trim();
+                const procedure = filterProcedureInput.value.trim();
+                currentPage = 1; // Reset trang về 1 khi filter
+                fetchFilteredErrorLogs(errorType, procedure);
+            }
+        });
     });
 
     function fetchErrorTypeData() {
