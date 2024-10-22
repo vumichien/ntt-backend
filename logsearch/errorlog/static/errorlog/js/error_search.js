@@ -149,6 +149,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Back button to return to search form
     backButton.addEventListener('click', function() {
         errorFlow.style.display = 'none';
+        document.getElementById('errorHeader').style.display = 'none';
         searchForm.reset();
     });
 });

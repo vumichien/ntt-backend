@@ -53,7 +53,7 @@
         </div>
         <div class="col-md-6">
             <div class="chart-card fixed-height">
-                <h4>同じエラー数の人数</h4>
+                <h4>同じ数のエラーを持つ人の数</h4>
                 <div class="chart-container">
                     <canvas id="userErrorBarChart"></canvas>
                 </div>
@@ -84,6 +84,20 @@
         <div class="col-12">
             <div class="chart-card table-card">
                 <h4>エラー種別詳細統計</h4>
+
+                <!-- Thêm ô lọc -->
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <input type="text" id="filterErrorType" class="form-control" placeholder="エラー種別でフィルタ">
+                    </div>
+                    <div class="col-md-4">
+                        <input type="text" id="filterProcedure" class="form-control" placeholder="操作手順でフィルタ">
+                    </div>
+                    <div class="col-md-4">
+                        <button id="filterButton" class="btn btn-primary">フィルタ</button>
+                    </div>
+                </div>
+
                 <div class="table-container">
                     <table id="errorTable" class="table">
                         <thead>
@@ -102,6 +116,14 @@
             </div>
         </div>
     </div>
+    <div id="flowContainer" class="row mt-4">
+        <!-- Cột bên trái chứa flow -->
+        <div id="flowSteps" class="col-8"></div>
+
+        <!-- Cột bên phải chứa bảng 入力データ一覧 -->
+        <div id="inputDataContainer" class="col-4"></div>
+    </div>
+
 </div>
 
 <!-- Add a modal for displaying error details -->

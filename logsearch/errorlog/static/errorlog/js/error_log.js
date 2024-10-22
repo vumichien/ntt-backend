@@ -1,7 +1,11 @@
 document.addEventListener('DOMContentLoaded', function() {
     let errorTypeBarChart, errorTypePieChart, userErrorBarChart, userErrorRadarChart;
     const userSelect = document.getElementById('userSelect');
-    const errorTable = document.getElementById('errorTable').getElementsByTagName('tbody')[0];
+    const filterErrorTypeInput = document.getElementById('filterErrorType');
+    const filterProcedureInput = document.getElementById('filterProcedure');
+    const filterButton = document.getElementById('filterButton');
+    const errorTable = document.getElementById('errorTable');
+    const errorTableBody  = document.getElementById('errorTable').getElementsByTagName('tbody')[0];
     const pagination = document.getElementById('pagination');
     let currentPage = 1;
     const recordsPerPage = 10;
@@ -13,11 +17,32 @@ document.addEventListener('DOMContentLoaded', function() {
     fetchErrorTypeData();
     fetchUserErrorData();
     fetchUsers();
-    fetchSummarizedErrorLogs();
     fetchSummaryData();
     fetchErrorActionData();
+     // Hiển thị dữ liệu mặc định khi load trang
+    fetchSummarizedErrorLogs();
 
     userSelect.addEventListener('change', () => fetchUserErrorRadarData(userSelect.value));
+
+    // Thêm sự kiện cho nút filter
+    filterButton.addEventListener('click', () => {
+        const errorType = filterErrorTypeInput.value.trim();
+        const procedure = filterProcedureInput.value.trim();
+        currentPage = 1; // Reset trang về 1 khi filter
+        fetchFilteredErrorLogs(errorType, procedure);
+    });
+
+    // Thêm sự kiện khi ấn Enter trong ô nhập để kích hoạt lọc
+    [filterErrorTypeInput, filterProcedureInput].forEach(input => {
+        input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const errorType = filterErrorTypeInput.value.trim();
+                const procedure = filterProcedureInput.value.trim();
+                currentPage = 1; // Reset trang về 1 khi filter
+                fetchFilteredErrorLogs(errorType, procedure);
+            }
+        });
+    });
 
     function fetchErrorTypeData() {
         fetch('/error-log/error-type-statistics/')
@@ -234,7 +259,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 tooltip: {
                     callbacks: {
                         label: function(context) {
-                            return `${context.parsed.y}人`;
+                            return `${context.parsed.y}人-${context.parsed.x}数`;
                         }
                     }
                 },
@@ -359,11 +384,28 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
 
+    function fetchFilteredErrorLogs(errorType, procedure) {
+        fetch(`/error-log/summarized-error-logs/?error_type=${encodeURIComponent(errorType)}&procedure=${encodeURIComponent(procedure)}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.length > 0) {
+                    errorTable.style.display = 'table';
+                } else {
+                    errorTable.style.display = 'none';
+                }
+                displayErrorLogs(data);
+            });
+    }
+
     function fetchSummarizedErrorLogs() {
         fetch('/error-log/summarized-error-logs/')
             .then(response => response.json())
             .then(data => {
-                data.sort((a, b) => a.error_type.localeCompare(b.error_type));
+                if (data.length > 0) {
+                    errorTable.style.display = 'table';
+                } else {
+                    errorTable.style.display = 'none';
+                }
                 displayErrorLogs(data);
             });
     }
@@ -374,9 +416,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const end = start + recordsPerPage;
         const currentRecords = logs.slice(start, end);
 
-        errorTable.innerHTML = '';
+        errorTableBody.innerHTML = '';
         currentRecords.forEach(log => {
-            const row = errorTable.insertRow();
+            const row = errorTableBody.insertRow();
             row.className = 'error-row';
             row.setAttribute('data-error-type', log.error_type);
             row.setAttribute('data-actions-before', log.actions_before_error);
@@ -384,7 +426,18 @@ document.addEventListener('DOMContentLoaded', function() {
             row.insertCell(0).textContent = log.error_type;
             row.insertCell(1).textContent = `${log.total_occurrences}件`;
             row.insertCell(2).textContent = log.actions_before_error.split(',').join(' ⇒ ');
-            row.insertCell(3).textContent = log.user_ids;
+
+            const users = log.user_ids.split(', ');
+            let displayedUsers = users.slice(0, 2).join(', ');
+            if (users.length > 2) {
+                displayedUsers += ', ...';
+            }
+            const userCell = row.insertCell(3);
+            userCell.textContent = displayedUsers;
+
+            if (users.length > 2) {
+                userCell.title = users.join(', ');
+            }
 
             row.addEventListener('click', function() {
                 const errorType = this.getAttribute('data-error-type');
@@ -402,6 +455,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         displayPagination(totalPages);
     }
+
 
     function showErrorDetail(errorType, actionsBefore) {
         const actionsBeforeDB = actionsBefore.split(' ⇒ ').join(',');
@@ -515,7 +569,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Thêm event listener cho nút đóng modal
     document.addEventListener('DOMContentLoaded', function() {
         const closeButton = document.querySelector('#errorDetailModal .btn-close');
         if (closeButton) {
@@ -540,19 +593,14 @@ document.addEventListener('DOMContentLoaded', function() {
             a.addEventListener('click', (e) => {
                 e.preventDefault();
                 currentPage = i;
-                fetchSummarizedErrorLogs();
+                const errorType = filterErrorTypeInput.value.trim();
+                const procedure = filterProcedureInput.value.trim();
+                fetchFilteredErrorLogs(errorType, procedure);
+
             });
             li.appendChild(a);
             pagination.appendChild(li);
         }
-    }
-
-    function generateColors(count) {
-        const colors = [];
-        for (let i = 0; i < count; i++) {
-            colors.push(`hsl(${(i * 360) / count}, 70%, 70%)`);
-        }
-        return colors;
     }
 
     function fetchSummaryData() {
@@ -738,7 +786,7 @@ document.addEventListener('DOMContentLoaded', function() {
             scales: {
                 y: {
                     beginAtZero: true,
-                    max: maxOccurrence + 1,
+                    max: maxOccurrence + 10,
                     ticks: {
                         stepSize: 1,
                         precision: 0
