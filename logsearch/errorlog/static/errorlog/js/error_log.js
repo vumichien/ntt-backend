@@ -1,18 +1,32 @@
 document.addEventListener('DOMContentLoaded', function() {
     let errorTypeBarChart, errorTypePieChart, userErrorBarChart, userErrorRadarChart;
     const userSelect = document.getElementById('userSelect');
-    const errorTable = document.getElementById('errorTable').getElementsByTagName('tbody')[0];
+    const filterErrorTypeInput = document.getElementById('filterErrorType');
+    const filterProcedureInput = document.getElementById('filterProcedure');
+    const filterButton = document.getElementById('filterButton');
+    const errorTable = document.getElementById('errorTable');
+    const errorTableBody  = document.getElementById('errorTable').getElementsByTagName('tbody')[0];
     const pagination = document.getElementById('pagination');
     let currentPage = 1;
     const recordsPerPage = 10;
 
+    // Hiển thị dữ liệu mặc định khi load trang
+    fetchSummarizedErrorLogs();
+
     fetchErrorTypeData();
     fetchUserErrorData();
     fetchUsers();
-    fetchSummarizedErrorLogs();
     fetchSummaryData();
 
     userSelect.addEventListener('change', () => fetchUserErrorRadarData(userSelect.value));
+
+    // Thêm sự kiện cho nút filter
+    filterButton.addEventListener('click', () => {
+        const errorType = filterErrorTypeInput.value.trim();
+        const procedure = filterProcedureInput.value.trim();
+        currentPage = 1; // Reset trang về 1 khi filter
+        fetchFilteredErrorLogs(errorType, procedure);
+    });
 
     function fetchErrorTypeData() {
         fetch('/error-log/error-type-statistics/')
@@ -354,11 +368,28 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
 
+    function fetchFilteredErrorLogs(errorType, procedure) {
+        fetch(`/error-log/summarized-error-logs/?error_type=${encodeURIComponent(errorType)}&procedure=${encodeURIComponent(procedure)}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.length > 0) {
+                    errorTable.style.display = 'table'; // Hiển thị bảng khi có dữ liệu
+                } else {
+                    errorTable.style.display = 'none'; // Ẩn bảng nếu không có kết quả
+                }
+                displayErrorLogs(data);
+            });
+    }
+
     function fetchSummarizedErrorLogs() {
         fetch('/error-log/summarized-error-logs/')
             .then(response => response.json())
             .then(data => {
-                data.sort((a, b) => a.error_type.localeCompare(b.error_type));
+                if (data.length > 0) {
+                    errorTable.style.display = 'table'; // Hiển thị bảng khi có dữ liệu
+                } else {
+                    errorTable.style.display = 'none'; // Ẩn bảng nếu không có kết quả
+                }
                 displayErrorLogs(data);
             });
     }
@@ -369,9 +400,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const end = start + recordsPerPage;
         const currentRecords = logs.slice(start, end);
 
-        errorTable.innerHTML = '';
+        errorTableBody.innerHTML = '';
         currentRecords.forEach(log => {
-            const row = errorTable.insertRow();
+            const row = errorTableBody.insertRow();
             row.className = 'error-row';
             row.setAttribute('data-error-type', log.error_type);
             row.setAttribute('data-actions-before', log.actions_before_error);
@@ -535,7 +566,10 @@ document.addEventListener('DOMContentLoaded', function() {
             a.addEventListener('click', (e) => {
                 e.preventDefault();
                 currentPage = i;
-                fetchSummarizedErrorLogs();
+                const errorType = filterErrorTypeInput.value.trim();
+                const procedure = filterProcedureInput.value.trim();
+                fetchFilteredErrorLogs(errorType, procedure); // Lọc lại với trang hiện tại
+
             });
             li.appendChild(a);
             pagination.appendChild(li);

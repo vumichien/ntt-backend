@@ -321,50 +321,41 @@ def error_details(request, error_type):
 @api_view(["GET"])
 def summarized_error_logs(request):
     try:
-        error_stats = (
-            ErrorStatistics.objects.prefetch_related(
-                Prefetch("users", queryset=User.objects.only("id", "user_name"))
-            )
-            .values("error_type", "actions_before_error", "captured_images")
-            .annotate(total_occurrences=Sum("occurrence_count"))
-            .order_by("-total_occurrences")
-        )
+        error_type_filter = request.GET.get('error_type', '').strip()
+        procedure_filter = request.GET.get('procedure', '').strip()
+
+        error_stats = ErrorStatistics.objects.prefetch_related(
+            Prefetch("users", queryset=User.objects.only("id", "user_name"))
+        ).annotate(total_occurrences=Sum("occurrence_count"))
+
+        if error_type_filter:
+            error_stats = error_stats.filter(error_type__icontains=error_type_filter)
+        if procedure_filter:
+            error_stats = error_stats.filter(actions_before_error__icontains=procedure_filter)
+
+        error_stats = error_stats.order_by('-total_occurrences')
 
         result = []
         for stat in error_stats:
-            # Tách các actions và các images từ ErrorStatistics
-            actions = stat["actions_before_error"].split(",")
-            images = stat["captured_images"].split(",")  # Giả định captured_images được lưu như chuỗi phân cách bởi dấu phẩy
+            actions = stat.actions_before_error.split(",")
+            images = stat.captured_images.split(",")
 
-
-            # Kết hợp actions và images thành flow_data
             flow_data = [{"explanation": action, "capimg": image} for action, image in zip(actions, images)]
+            user_ids = ", ".join(stat.users.values_list('user_name', flat=True))
 
-            user_ids = set()
-            user_names = set()
-            error_stat_entries = ErrorStatistics.objects.filter(
-                error_type=stat["error_type"],
-                actions_before_error=stat["actions_before_error"],
-            ).prefetch_related("users")
-
-            for error_stat in error_stat_entries:
-                user_ids.update(error_stat.users.values_list("id", flat=True))
-                user_names.update(error_stat.users.values_list("user_name", flat=True))
-
-            result.append(
-                {
-                    "error_type": stat["error_type"],
-                    "total_occurrences": stat["total_occurrences"],
-                    "actions_before_error": stat["actions_before_error"],
-                    "user_ids": ", ".join(user_names),
-                    "flow_data": flow_data,  # Thêm thông tin flow đã ghép giữa actions và images
-                }
-            )
+            result.append({
+                "error_type": stat.error_type,
+                "total_occurrences": stat.total_occurrences,
+                "actions_before_error": stat.actions_before_error,
+                "user_ids": user_ids,
+                "flow_data": flow_data,
+            })
 
         return Response(result, status=status.HTTP_200_OK)
 
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 
 # View to render the error search page
