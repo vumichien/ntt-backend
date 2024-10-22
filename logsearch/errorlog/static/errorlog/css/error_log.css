@@ -409,6 +409,50 @@ canvas {
     transition: background-color 0.3s ease;
 }
 
-.error-row:hover {
-    background-color: #9a9494 !important;
+/* Style cho các hàng trong bảng */
+.error-row-hover {
+    background-color: #f5f5f5; /* Màu nền khi hover */
 }
+
+/* Giới hạn độ dài của ô ユーザーID, nếu nội dung quá dài thì thêm dấu "..." */
+.error-row td:nth-child(4) {
+    white-space: nowrap; /* Không cho xuống dòng */
+    overflow: hidden;
+    text-overflow: ellipsis; /* Thêm dấu "..." khi nội dung quá dài */
+    max-width: 200px; /* Giới hạn chiều rộng của cột */
+    cursor: pointer; /* Con trỏ thành dạng pointer khi hover */
+}
+
+/* Tooltip hiển thị khi hover vào ô ユーザーID */
+.error-row td:nth-child(4):hover {
+    position: relative;
+}
+
+.error-row td:nth-child(4):hover::after {
+    content: attr(title); /* Hiển thị danh sách đầy đủ khi hover */
+    position: absolute;
+    left: 0;
+    top: 100%;
+    z-index: 10;
+    white-space: pre-wrap; /* Cho phép xuống dòng trong tooltip */
+    background-color: #333;
+    color: #fff;
+    padding: 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    max-width: 300px; /* Giới hạn chiều rộng của tooltip */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.error-row td:nth-child(4):hover::before {
+    content: '';
+    position: absolute;
+    left: 10px;
+    top: 100%;
+    width: 0;
+    height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-bottom: 6px solid #333;
+}
+

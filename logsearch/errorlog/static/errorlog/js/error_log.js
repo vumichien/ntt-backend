@@ -410,7 +410,20 @@ document.addEventListener('DOMContentLoaded', function() {
             row.insertCell(0).textContent = log.error_type;
             row.insertCell(1).textContent = `${log.total_occurrences}件`;
             row.insertCell(2).textContent = log.actions_before_error.split(',').join(' ⇒ ');
-            row.insertCell(3).textContent = log.user_ids;
+
+            // Tạo danh sách user name, giới hạn hiển thị 2 user đầu tiên và dấu "..."
+            const users = log.user_ids.split(', ');
+            let displayedUsers = users.slice(0, 2).join(', ');
+            if (users.length > 2) {
+                displayedUsers += ', ...';  // Thêm dấu "..." nếu danh sách quá dài
+            }
+            const userCell = row.insertCell(3);
+            userCell.textContent = displayedUsers;
+
+            // Thêm tooltip để hiển thị danh sách đầy đủ khi hover vào
+            if (users.length > 2) {
+                userCell.title = users.join(', ');  // Danh sách đầy đủ khi hover
+            }
 
             row.addEventListener('click', function() {
                 const errorType = this.getAttribute('data-error-type');
@@ -428,6 +441,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         displayPagination(totalPages);
     }
+
 
     function showErrorDetail(errorType, actionsBefore) {
         const actionsBeforeDB = actionsBefore.split(' ⇒ ').join(',');

@@ -138,8 +138,8 @@ def import_error_log(request):
                     existing_stat = ErrorStatistics.objects.filter(
                         master_error_log=master_error_log,
                         error_type=key,
-                        actions_before_error=actions_str,
-                        win_title=win_title,
+                        actions_before_error=actions_str.strip(),  # Ensure consistent formatting
+                        win_title=win_title.strip(),  # Ensure consistent formatting
                     ).first()
 
                     if existing_stat:
@@ -157,9 +157,9 @@ def import_error_log(request):
                             master_error_log=master_error_log,
                             error_type=key,
                             occurrence_count=1,
-                            actions_before_error=actions_str,
-                            captured_images=images_str,
-                            win_title=win_title,
+                            actions_before_error=actions_str.strip(),
+                            captured_images=images_str.strip(),
+                            win_title=win_title.strip(),
                         )
                         if row["user_name"]:
                             user, _ = User.objects.get_or_create(
@@ -324,6 +324,7 @@ def summarized_error_logs(request):
         error_type_filter = request.GET.get('error_type', '').strip()
         procedure_filter = request.GET.get('procedure', '').strip()
 
+        # Fetch và group các ErrorStatistics theo error_type và actions_before_error
         error_stats = ErrorStatistics.objects.prefetch_related(
             Prefetch("users", queryset=User.objects.only("id", "user_name"))
         ).annotate(total_occurrences=Sum("occurrence_count"))
@@ -333,21 +334,33 @@ def summarized_error_logs(request):
         if procedure_filter:
             error_stats = error_stats.filter(actions_before_error__icontains=procedure_filter)
 
-        error_stats = error_stats.order_by('-total_occurrences')
-
-        result = []
+        # Group lại theo error_type và actions_before_error, tổng hợp dữ liệu
+        grouped_stats = {}
         for stat in error_stats:
-            actions = stat.actions_before_error.split(",")
-            images = stat.captured_images.split(",")
+            key = (stat.error_type, stat.actions_before_error)
+            if key not in grouped_stats:
+                grouped_stats[key] = {
+                    "error_type": stat.error_type,
+                    "actions_before_error": stat.actions_before_error,
+                    "total_occurrences": stat.total_occurrences,
+                    "users": set(stat.users.values_list('user_name', flat=True))  # Tập hợp các user name
+                }
+            else:
+                grouped_stats[key]["total_occurrences"] += stat.total_occurrences
+                grouped_stats[key]["users"].update(stat.users.values_list('user_name', flat=True))
 
+        # Chuẩn bị kết quả để trả về
+        result = []
+        for key, stat in grouped_stats.items():
+            actions = stat["actions_before_error"].split(",")
+            images = stat.get("captured_images", "").split(",") if "captured_images" in stat else []
             flow_data = [{"explanation": action, "capimg": image} for action, image in zip(actions, images)]
-            user_ids = ", ".join(stat.users.values_list('user_name', flat=True))
 
             result.append({
-                "error_type": stat.error_type,
-                "total_occurrences": stat.total_occurrences,
-                "actions_before_error": stat.actions_before_error,
-                "user_ids": user_ids,
+                "error_type": stat["error_type"],
+                "total_occurrences": stat["total_occurrences"],
+                "actions_before_error": stat["actions_before_error"],
+                "user_ids": ", ".join(stat["users"]),  # Nối danh sách user_name thành chuỗi
                 "flow_data": flow_data,
             })
 
@@ -355,6 +368,7 @@ def summarized_error_logs(request):
 
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 
 
