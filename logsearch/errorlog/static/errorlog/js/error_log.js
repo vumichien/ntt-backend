@@ -6,11 +6,16 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentPage = 1;
     const recordsPerPage = 10;
 
+    let errorActionBarChart;
+    const errorTypeButtons = document.getElementById('errorTypeButtons');
+    const errorActionChartContainer = document.getElementById('errorActionChartContainer');
+
     fetchErrorTypeData();
     fetchUserErrorData();
     fetchUsers();
     fetchSummarizedErrorLogs();
     fetchSummaryData();
+    fetchErrorActionData();
 
     userSelect.addEventListener('change', () => fetchUserErrorRadarData(userSelect.value));
 
@@ -558,5 +563,229 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('totalUsersWithErrors').textContent = data.total_users_with_errors.toLocaleString();
                 document.getElementById('averageErrorsPerUser').textContent = data.average_errors_per_user.toFixed(2);
             });
+    }
+
+    function fetchErrorActionData() {
+        fetch('/error-log/error-action-statistics/')
+            .then(response => response.json())
+            .then(data => {
+                createErrorTypeButtons(data);
+                if (data.length > 0) {
+                    createErrorActionBarChart(data[0].error_type, data[0].actions);
+                }
+            })
+            .catch(error => console.error('Error fetching error action data:', error));
+    }
+
+    function createErrorTypeButtons(data) {
+        errorTypeButtons.innerHTML = '';
+
+        // Sort data by error_type alphabetically
+        data.sort((a, b) => a.error_type.localeCompare(b.error_type));
+
+        const prevAllButton = document.createElement('button');
+        prevAllButton.className = 'btn btn-outline-dark mr-2 scroll-button';
+        prevAllButton.textContent = '<<';
+        prevAllButton.addEventListener('click', () => scrollButtons('leftAll'));
+        errorTypeButtons.appendChild(prevAllButton);
+
+        const prevButton = document.createElement('button');
+        prevButton.className = 'btn btn-outline-dark mr-2 scroll-button';
+        prevButton.textContent = '<';
+        prevButton.addEventListener('click', () => scrollButtons('left'));
+        errorTypeButtons.appendChild(prevButton);
+
+        const buttonContainer = document.createElement('div');
+        buttonContainer.className = 'button-container';
+        buttonContainer.style.display = 'flex';
+        buttonContainer.style.overflowX = 'hidden';
+        errorTypeButtons.appendChild(buttonContainer);
+
+        // Add left ellipsis button
+        const leftEllipsis = document.createElement('button');
+        leftEllipsis.className = 'btn btn-outline-secondary mr-2 ellipsis-button';
+        leftEllipsis.textContent = '...';
+        leftEllipsis.style.display = 'none';
+        buttonContainer.appendChild(leftEllipsis);
+
+        data.forEach((item, index) => {
+            const button = document.createElement('button');
+            button.className = 'btn btn-outline-primary mr-2 mb-2';
+            button.textContent = item.error_type;
+            button.addEventListener('click', () => createErrorActionBarChart(item.error_type, item.actions));
+            buttonContainer.appendChild(button);
+            if (index === 0) button.classList.add('active');
+        });
+
+        // Add right ellipsis button
+        const rightEllipsis = document.createElement('button');
+        rightEllipsis.className = 'btn btn-outline-secondary mr-2 ellipsis-button';
+        rightEllipsis.textContent = '...';
+        rightEllipsis.style.display = 'none';
+        buttonContainer.appendChild(rightEllipsis);
+
+        const nextButton = document.createElement('button');
+        nextButton.className = 'btn btn-outline-dark scroll-button';
+        nextButton.textContent = '>';
+        nextButton.addEventListener('click', () => scrollButtons('right'));
+        errorTypeButtons.appendChild(nextButton);
+
+        const nextAllButton = document.createElement('button');
+        nextAllButton.className = 'btn btn-outline-dark ml-2 scroll-button';
+        nextAllButton.textContent = '>>';
+        nextAllButton.addEventListener('click', () => scrollButtons('rightAll'));
+        errorTypeButtons.appendChild(nextAllButton);
+
+        // Show only the first 4 buttons initially
+        const buttons = buttonContainer.querySelectorAll('button:not(.ellipsis-button)');
+        buttons.forEach((button, index) => {
+            if (index < 4) {
+                button.style.display = 'inline-block';
+            } else {
+                button.style.display = 'none';
+            }
+        });
+
+        // Update scroll button visibility
+        updateScrollButtonVisibility();
+    }
+
+    function scrollButtons(direction) {
+        const buttonContainer = errorTypeButtons.querySelector('.button-container');
+        const buttons = buttonContainer.querySelectorAll('button:not(.ellipsis-button)');
+        const visibleButtons = Array.from(buttons).filter(button => button.style.display !== 'none');
+        const firstVisibleIndex = Array.from(buttons).indexOf(visibleButtons[0]);
+
+        let newFirstVisibleIndex;
+        switch(direction) {
+            case 'left':
+                newFirstVisibleIndex = Math.max(0, firstVisibleIndex - 1);
+                break;
+            case 'right':
+                newFirstVisibleIndex = Math.min(buttons.length - 4, firstVisibleIndex + 1);
+                break;
+            case 'leftAll':
+                newFirstVisibleIndex = 0;
+                break;
+            case 'rightAll':
+                newFirstVisibleIndex = buttons.length - 4;
+                break;
+        }
+
+        buttons.forEach((button, index) => {
+            if (index >= newFirstVisibleIndex && index < newFirstVisibleIndex + 4) {
+                button.style.display = 'inline-block';
+            } else {
+                button.style.display = 'none';
+            }
+        });
+
+        updateScrollButtonVisibility();
+    }
+
+    function updateScrollButtonVisibility() {
+        const buttonContainer = errorTypeButtons.querySelector('.button-container');
+        const buttons = buttonContainer.querySelectorAll('button:not(.ellipsis-button)');
+        const visibleButtons = Array.from(buttons).filter(button => button.style.display !== 'none');
+        const firstVisibleIndex = Array.from(buttons).indexOf(visibleButtons[0]);
+
+        const prevAllButton = errorTypeButtons.querySelector('.scroll-button:nth-child(1)');
+        const prevButton = errorTypeButtons.querySelector('.scroll-button:nth-child(2)');
+        const nextButton = errorTypeButtons.querySelector('.scroll-button:nth-last-child(2)');
+        const nextAllButton = errorTypeButtons.querySelector('.scroll-button:last-child');
+        const leftEllipsis = buttonContainer.querySelector('.ellipsis-button:first-child');
+        const rightEllipsis = buttonContainer.querySelector('.ellipsis-button:last-child');
+
+        prevAllButton.disabled = prevButton.disabled = firstVisibleIndex === 0;
+        nextAllButton.disabled = nextButton.disabled = firstVisibleIndex >= buttons.length - 4;
+
+        leftEllipsis.style.display = firstVisibleIndex > 0 ? 'inline-block' : 'none';
+        rightEllipsis.style.display = firstVisibleIndex < buttons.length - 4 ? 'inline-block' : 'none';
+
+        [prevAllButton, prevButton, nextButton, nextAllButton].forEach(button => {
+            button.classList.toggle('disabled', button.disabled);
+            if (button.disabled) {
+                button.style.backgroundColor = '#6c757d';
+                button.style.borderColor = '#6c757d';
+                button.style.color = '#ffffff';
+            } else {
+                button.style.backgroundColor = '';
+                button.style.borderColor = '';
+                button.style.color = '';
+            }
+        });
+    }
+
+    function createErrorActionBarChart(errorType, actions) {
+        const ctx = errorActionChartContainer.getContext('2d');
+        const occurrenceCounts = actions.map(action => action.occurrence_count);
+        const maxOccurrence = Math.max(...occurrenceCounts);
+
+        const chartData = {
+            labels: actions.map((_, index) => `操作 ${index + 1}`),
+            datasets: [{
+                label: '発生件数',
+                data: occurrenceCounts,
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                borderColor: 'rgb(75, 192, 192)',
+                borderWidth: 1
+            }]
+        };
+
+        const chartOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: maxOccurrence + 1,
+                    ticks: {
+                        stepSize: 1,
+                        precision: 0
+                    },
+                    title: {
+                        display: true,
+                        text: '発生件数'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'エラー前の操作'
+                    }
+                }
+            },
+            plugins: {
+                title: {
+                    display: true,
+                    text: `${errorType}のエラーアクション`
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return `発生件数: ${context.parsed.y}`;
+                        }
+                    }
+                }
+            }
+        };
+
+        if (errorActionBarChart) {
+            errorActionBarChart.destroy();
+        }
+
+        errorActionBarChart = new Chart(ctx, {
+            type: 'bar',
+            data: chartData,
+            options: chartOptions
+        });
+
+        // Update active button
+        errorTypeButtons.querySelectorAll('button').forEach(button => {
+            button.classList.remove('active');
+            if (button.textContent === errorType) {
+                button.classList.add('active');
+            }
+        });
     }
 });

@@ -1,11 +1,12 @@
 from django.conf import settings
-from rest_framework.decorators import api_view
-from rest_framework.response import Response
-from rest_framework import status
 from django.utils import timezone
 from django.db.models import Sum, F, Prefetch, Count, Avg
 from django.shortcuts import render, get_object_or_404
 from django.utils.html import escape
+from django.http import JsonResponse
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework import status
 
 import os
 import pandas as pd
@@ -516,3 +517,17 @@ def are_actions_similar(action1, action2):
             return False
 
     return True
+
+
+def error_action_statistics(request):
+    error_types = ErrorStatistics.objects.values("error_type").distinct()
+    data = []
+    for error_type in error_types:
+        actions = (
+            ErrorStatistics.objects.filter(error_type=error_type["error_type"])
+            .values("actions_before_error")
+            .annotate(occurrence_count=Count("id"))
+            .order_by("actions_before_error")
+        )
+        data.append({"error_type": error_type["error_type"], "actions": list(actions)})
+    return JsonResponse(data, safe=False)

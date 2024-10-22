@@ -40,4 +40,9 @@ urlpatterns = [
     path("search-flow/", views.search_error_flow, name="search-flow"),
     path("summary-data/", views.summary_data, name="summary_data"),
     path("error-detail/<str:error_type>/", views.error_detail, name="error-detail"),
+    path(
+        "error-action-statistics/",
+        views.error_action_statistics,
+        name="error_action_statistics",
+    ),
 ]
