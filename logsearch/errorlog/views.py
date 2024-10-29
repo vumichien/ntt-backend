@@ -20,6 +20,40 @@ def error_log_visualization(request):
     return render(request, "errorlog/error_log.html")
 
 
+def mask_explanation(explanation):
+    # Function to mask specific patterns in the explanation
+    if not explanation:
+        return explanation
+
+    parts = explanation.split("へ")
+    if len(parts) > 1:
+        # Case 1: Pattern with へ
+        # Keep the system/field name part unchanged
+        result = parts[0] + "へ"
+        # Mask the input value in the remaining part
+        remaining = "へ".join(parts[1:])
+
+        # Order matters! Check specific patterns first
+        # 1. Mask dates (YYYY-MM-DD format)
+        remaining = re.sub(r"「\d{4}-\d{2}-\d{2}」", "「DATE」", remaining)
+
+        # 2. Mask numbers (must come before general text)
+        remaining = re.sub(r"「\d+」", "「NUMBER」", remaining)
+
+        # 3. Mask remaining text patterns (only if not already masked)
+        remaining = re.sub(r"「(?!(DATE|NUMBER)」)[^」]+」", "「TEXT」", remaining)
+
+        explanation = result + remaining
+    else:
+        # Case 2: Pattern without へ
+        # Apply the same masking patterns to the entire string
+        explanation = re.sub(r"「\d{4}-\d{2}-\d{2}」", "「DATE」", explanation)
+        explanation = re.sub(r"「\d+」", "「NUMBER」", explanation)
+        explanation = re.sub(r"「(?!(DATE|NUMBER)」)[^」]+」", "「TEXT」", explanation)
+
+    return explanation
+
+
 @api_view(["GET"])
 def import_error_log(request):
     try:
@@ -129,7 +163,7 @@ def import_error_log(request):
                     win_title = row["win_title"]
                     # Thêm `explanation` và `capimg` hiện tại trước khi lưu
                     if pd.notna(row["explanation"]):
-                        actions.append(row["explanation"])
+                        actions.append(mask_explanation(row["explanation"]))
                     if pd.notna(row["capimg"]):
                         captured_images.append(row["capimg"])
                     actions_str = ",".join(actions)
@@ -178,7 +212,7 @@ def import_error_log(request):
                     captured_images = []
 
                 if pd.notna(row["explanation"]):
-                    actions.append(row["explanation"])
+                    actions.append(mask_explanation(row["explanation"]))
                 if pd.notna(row["capimg"]):
                     captured_images.append(row["capimg"])
 
