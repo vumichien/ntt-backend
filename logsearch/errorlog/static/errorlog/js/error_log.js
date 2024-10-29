@@ -416,7 +416,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 // Initialize the shared data structure first
                 initializeErrorLogsData(data);
-                
+
                 if (data.length > 0) {
                     errorTable.style.display = 'table';
                 } else {
@@ -452,10 +452,10 @@ document.addEventListener('DOMContentLoaded', function() {
         currentRecords.forEach((log) => {
             const row = errorTableBody.insertRow();
             row.className = 'error-row';
-            
+
             // Find the original log with operation ID
             const originalLog = errorLogsData.allLogs.find(
-                l => l.error_type === log.error_type && 
+                l => l.error_type === log.error_type &&
                 l.actions_before_error === log.actions_before_error
             );
             const operationId = originalLog ? originalLog.operationId : 'N/A';
@@ -467,7 +467,7 @@ document.addEventListener('DOMContentLoaded', function() {
             row.insertCell(0).textContent = log.error_type;
             row.insertCell(1).textContent = `${log.total_occurrences}件`;
             row.insertCell(2).textContent = operationId;
-            
+
             const actionsCell = row.insertCell(3);
             actionsCell.textContent = log.actions_before_error.split(',').join(' ⇒ ');
 
