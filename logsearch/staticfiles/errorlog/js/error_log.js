@@ -383,7 +383,50 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     }
 
+    // Add at the top with other global variables
+    let errorLogsData = {
+        allLogs: [],          // Store all logs with their operation IDs
+        operationMap: new Map() // Map to store error_type -> operation IDs mapping
+    };
 
+    // Function to initialize operation IDs for all logs
+    function initializeErrorLogsData(logs) {
+        errorLogsData.allLogs = logs.map((log, index) => ({
+            ...log,
+            operationId: `OP${String(index + 1).padStart(3, '0')}`
+        }));
+
+        // Create mapping of error_type to operation IDs
+        errorLogsData.operationMap.clear();
+        errorLogsData.allLogs.forEach(log => {
+            if (!errorLogsData.operationMap.has(log.error_type)) {
+                errorLogsData.operationMap.set(log.error_type, []);
+            }
+            errorLogsData.operationMap.get(log.error_type).push({
+                operationId: log.operationId,
+                actions: log.actions_before_error
+            });
+        });
+    }
+
+    // Modify fetchSummarizedErrorLogs
+    function fetchSummarizedErrorLogs() {
+        fetch('/error-log/summarized-error-logs/')
+            .then(response => response.json())
+            .then(data => {
+                // Initialize the shared data structure first
+                initializeErrorLogsData(data);
+                
+                if (data.length > 0) {
+                    errorTable.style.display = 'table';
+                } else {
+                    errorTable.style.display = 'none';
+                }
+                displayErrorLogs(data);
+            });
+    }
+
+    // Modify fetchFilteredErrorLogs
     function fetchFilteredErrorLogs(errorType, procedure) {
         fetch(`/error-log/summarized-error-logs/?error_type=${encodeURIComponent(errorType)}&procedure=${encodeURIComponent(procedure)}`)
             .then(response => response.json())
@@ -393,23 +436,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else {
                     errorTable.style.display = 'none';
                 }
+                // Use the filtered data for display but keep original operation IDs
                 displayErrorLogs(data);
             });
     }
 
-    function fetchSummarizedErrorLogs() {
-        fetch('/error-log/summarized-error-logs/')
-            .then(response => response.json())
-            .then(data => {
-                if (data.length > 0) {
-                    errorTable.style.display = 'table';
-                } else {
-                    errorTable.style.display = 'none';
-                }
-                displayErrorLogs(data);
-            });
-    }
-
+    // Modify displayErrorLogs to use the shared operation IDs
     function displayErrorLogs(logs) {
         const totalPages = Math.ceil(logs.length / recordsPerPage);
         const start = (currentPage - 1) * recordsPerPage;
@@ -417,24 +449,35 @@ document.addEventListener('DOMContentLoaded', function() {
         const currentRecords = logs.slice(start, end);
 
         errorTableBody.innerHTML = '';
-        currentRecords.forEach(log => {
+        currentRecords.forEach((log) => {
             const row = errorTableBody.insertRow();
             row.className = 'error-row';
+            
+            // Find the original log with operation ID
+            const originalLog = errorLogsData.allLogs.find(
+                l => l.error_type === log.error_type && 
+                l.actions_before_error === log.actions_before_error
+            );
+            const operationId = originalLog ? originalLog.operationId : 'N/A';
+
             row.setAttribute('data-error-type', log.error_type);
             row.setAttribute('data-actions-before', log.actions_before_error);
+            row.setAttribute('data-operation-id', operationId);
 
             row.insertCell(0).textContent = log.error_type;
             row.insertCell(1).textContent = `${log.total_occurrences}件`;
-            row.insertCell(2).textContent = log.actions_before_error.split(',').join(' ⇒ ');
+            row.insertCell(2).textContent = operationId;
+            
+            const actionsCell = row.insertCell(3);
+            actionsCell.textContent = log.actions_before_error.split(',').join(' ⇒ ');
 
             const users = log.user_ids.split(', ');
             let displayedUsers = users.slice(0, 2).join(', ');
             if (users.length > 2) {
                 displayedUsers += ', ...';
             }
-            const userCell = row.insertCell(3);
+            const userCell = row.insertCell(4);
             userCell.textContent = displayedUsers;
-
             if (users.length > 2) {
                 userCell.title = users.join(', ');
             }
@@ -455,7 +498,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         displayPagination(totalPages);
     }
-
 
     function showErrorDetail(errorType, actionsBefore) {
         const actionsBeforeDB = actionsBefore.split(' ⇒ ').join(',');
@@ -764,13 +806,18 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // Modify createErrorActionBarChart to use the shared operation IDs
     function createErrorActionBarChart(errorType, actions) {
         const ctx = errorActionChartContainer.getContext('2d');
         const occurrenceCounts = actions.map(action => action.occurrence_count);
         const maxOccurrence = Math.max(...occurrenceCounts);
 
+        // Get operation IDs from the shared data structure
+        const operationData = errorLogsData.operationMap.get(errorType) || [];
+        const operationIds = operationData.map(op => op.operationId);
+
         const chartData = {
-            labels: actions.map((_, index) => `操作 ${index + 1}`),
+            labels: operationIds,
             datasets: [{
                 label: '発生件数',
                 data: occurrenceCounts,
