@@ -659,9 +659,29 @@ document.addEventListener('DOMContentLoaded', function() {
         fetch('/error-log/error-action-statistics/')
             .then(response => response.json())
             .then(data => {
+                // Sort data alphabetically by error_type
+                data.sort((a, b) => a.error_type.localeCompare(b.error_type));
+
                 createErrorTypeButtons(data);
+
+                // Create initial chart with first error type's data
                 if (data.length > 0) {
-                    createErrorActionBarChart(data[0].error_type, data[0].actions);
+                    const firstErrorType = data[0].error_type;
+                    const matchingOperations = errorLogsData.operationMap.get(firstErrorType) || [];
+
+                    // Map the actions data with operation IDs
+                    const chartData = data[0].actions.map((action, index) => ({
+                        operationId: matchingOperations[index]?.operationId || `OP${String(index + 1).padStart(3, '0')}`,
+                        occurrence_count: action.occurrence_count
+                    }));
+
+                    createErrorActionBarChart(firstErrorType, chartData);
+
+                    // Set the first button as active
+                    const firstButton = errorTypeButtons.querySelector('button:not(.scroll-button):not(.ellipsis-button)');
+                    if (firstButton) {
+                        firstButton.classList.add('active');
+                    }
                 }
             })
             .catch(error => console.error('Error fetching error action data:', error));
@@ -702,9 +722,23 @@ document.addEventListener('DOMContentLoaded', function() {
             const button = document.createElement('button');
             button.className = 'btn btn-outline-primary mr-2 mb-2';
             button.textContent = item.error_type;
-            button.addEventListener('click', () => createErrorActionBarChart(item.error_type, item.actions));
+            button.addEventListener('click', () => {
+                // Remove active class from all buttons
+                buttonContainer.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+
+                // Get matching operations for this error type
+                const matchingOperations = errorLogsData.operationMap.get(item.error_type) || [];
+
+                // Map the actions data with operation IDs
+                const chartData = item.actions.map((action, index) => ({
+                    operationId: matchingOperations[index]?.operationId || `OP${String(index + 1).padStart(3, '0')}`,
+                    occurrence_count: action.occurrence_count
+                }));
+
+                createErrorActionBarChart(item.error_type, chartData);
+            });
             buttonContainer.appendChild(button);
-            if (index === 0) button.classList.add('active');
         });
 
         // Add right ellipsis button
@@ -807,25 +841,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Modify createErrorActionBarChart to use the shared operation IDs
-    function createErrorActionBarChart(errorType, actions) {
+    function createErrorActionBarChart(errorType, chartData) {
         const ctx = errorActionChartContainer.getContext('2d');
-        const occurrenceCounts = actions.map(action => action.occurrence_count);
-        const maxOccurrence = Math.max(...occurrenceCounts);
-
-        // Get operation IDs from the shared data structure
-        const operationData = errorLogsData.operationMap.get(errorType) || [];
-        const operationIds = operationData.map(op => op.operationId);
-
-        const chartData = {
-            labels: operationIds,
-            datasets: [{
-                label: '発生件数',
-                data: occurrenceCounts,
-                backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                borderColor: 'rgb(75, 192, 192)',
-                borderWidth: 1
-            }]
-        };
 
         const chartOptions = {
             responsive: true,
@@ -833,11 +850,6 @@ document.addEventListener('DOMContentLoaded', function() {
             scales: {
                 y: {
                     beginAtZero: true,
-                    max: maxOccurrence + 10,
-                    ticks: {
-                        stepSize: 1,
-                        precision: 0
-                    },
                     title: {
                         display: true,
                         text: '発生件数'
@@ -846,7 +858,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 x: {
                     title: {
                         display: true,
-                        text: 'エラー前の操作'
+                        text: 'エラー発生前の操作 ID'
                     }
                 }
             },
@@ -865,22 +877,38 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         };
 
+        const chartDataConfig = {
+            labels: chartData.map(item => item.operationId),
+            datasets: [{
+                label: '発生件数',
+                data: chartData.map(item => item.occurrence_count),
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                borderColor: 'rgb(75, 192, 192)',
+                borderWidth: 1
+            }]
+        };
+
         if (errorActionBarChart) {
             errorActionBarChart.destroy();
         }
 
         errorActionBarChart = new Chart(ctx, {
             type: 'bar',
-            data: chartData,
+            data: chartDataConfig,
             options: chartOptions
         });
-
-        // Update active button
-        errorTypeButtons.querySelectorAll('button').forEach(button => {
-            button.classList.remove('active');
-            if (button.textContent === errorType) {
-                button.classList.add('active');
-            }
-        });
     }
+
+    // Make sure to call fetchSummarizedErrorLogs before fetchErrorActionData
+    document.addEventListener('DOMContentLoaded', function() {
+        // ... other initialization code ...
+
+        // First fetch the summarized logs to initialize the operation IDs
+        fetchSummarizedErrorLogs().then(() => {
+            // Then fetch and display the error action data
+            fetchErrorActionData();
+        });
+
+        // ... rest of initialization code ...
+    });
 });
