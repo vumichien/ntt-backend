@@ -14,13 +14,13 @@
 <body>
     <div class="app-container container">
         <header class="app-header mb-4">
-            <h1>ログ検索システム</h1>
+            <h1>手順生成システム</h1>
         </header>
 
         <nav class="app-nav mb-4">
             <ul class="nav nav-tabs justify-content-center">
                 <li class="nav-item">
-                    <a href="{% url 'process-log' %}" class="nav-link {% if request.resolver_match.url_name == 'process-log' %}active{% endif %}">ログ検索</a>
+                    <a href="{% url 'process-log' %}" class="nav-link {% if request.resolver_match.url_name == 'process-log' %}active{% endif %}">手順生成</a>
                 </li>
                  <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#">エラーログ</a>
