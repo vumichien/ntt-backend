@@ -60,7 +60,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (data.message) {
                     if (data.expecting_keyword) {
                         lastKeyword = '';  // Reset lastKeyword when bot asks for a new keyword
-                    } else if (lastKeyword === '' && data.message === "どのキーワードでログを検索したいですか？") {
+                    } else if (lastKeyword === '' && data.message === "どんな手順を知りたいですか？") {
                         // Don't save lastKeyword here, wait for user's response
                     } else if (lastKeyword === '') {
                         lastKeyword = messageToSend;  // Save the keyword
@@ -77,7 +77,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     displayConfirmationButtons();
                 } else if (data.expecting_keyword) {
                     lastKeyword = '';
-                } else if (lastKeyword === '' && data.message !== "どのキーワードでログを検索したいですか？") {
+                } else if (lastKeyword === '' && data.message !== "どんな手順を知りたいですか？") {
                     lastKeyword = messageToSend;  // Save the keyword
                 }
 

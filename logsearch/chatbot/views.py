@@ -65,9 +65,7 @@ def get_chat_response(request):
                 chatbot_message = "質問を取得できませんでした。もう一度お試しください。"
                 return JsonResponse({"message": chatbot_message})
         else:
-            chatbot_message = (
-                "ログが見つかりませんでした。他のキーワードを試してください。"
-            )
+            chatbot_message = "手順が見つかりませんでした。他の手順を試してください。"
             # Đặt lại trạng thái đợi từ khóa để người dùng có thể nhập từ khóa mới
             request.session["expecting_keyword"] = True
             return JsonResponse({"message": chatbot_message})
@@ -136,9 +134,9 @@ def get_chat_response(request):
                     # Create the header card with log info
                     header_card = f"""
                     <div class="timeline-header-card">
-                        <h3>ログ概要</h3>
+                        <h3>操作手順概要</h3>
                         <p><strong>操作数:</strong> {log_info.get('total_operations', 'N/A')}</p>
-                        <p><strong>ログの内容:</strong> {log_info.get('operation_time', 'N/A')}</p>
+                        <p><strong>手順の内容:</strong> {log_info.get('operation_time', 'N/A')}</p>
                     </div>
                     """
 
@@ -155,7 +153,7 @@ def get_chat_response(request):
             request.session["expecting_keyword"] = True
             return JsonResponse(
                 {
-                    "message": "どのキーワードでログを検索したいですか？",
+                    "message": "どんな手順を知りたいですか？",
                     "expecting_keyword": True,
                 }
             )
@@ -171,7 +169,7 @@ def get_chat_response(request):
     chatbot_message = response.query_result.fulfillment_text
 
     # Nếu phản hồi từ Dialogflow là câu hỏi tìm kiếm log, chuyển sang trạng thái tìm kiếm log
-    if "どのキーワードでログを検索したいですか？" in chatbot_message:
+    if "どんな手順を知りたいですか？" in chatbot_message:
         request.session["expecting_keyword"] = True  # Đặt trạng thái đợi từ khóa
         return JsonResponse({"message": chatbot_message, "expecting_keyword": True})
 
