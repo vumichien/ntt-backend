@@ -7,12 +7,6 @@ class MasterLog(models.Model):
     operation_time = models.CharField(max_length=8)  # To store "HH:MM:SS"
     total_operations = models.IntegerField()
     note = models.CharField(max_length=100, null=True, blank=True)
-    question_file = models.FileField(
-        upload_to="data/process_logs/questions/", max_length=255, null=True, blank=True
-    )
-    template_file = models.FileField(
-        upload_to="data/process_logs/templates/", max_length=255, null=True, blank=True
-    )
 
     def __str__(self):
         return f"{self.filename} - {self.total_operations} operations"
@@ -29,6 +23,19 @@ class MasterLogInfo(models.Model):
     data_features = models.CharField(
         max_length=255, null=True, blank=True
     )  # データ特徴
+
+
+    question_file = models.FileField(
+        upload_to="data/process_logs/questions/", max_length=255, null=True, blank=True
+    )
+    template_file = models.FileField(
+        upload_to="data/process_logs/templates/", max_length=255, null=True, blank=True
+    )
+
+    history_file = models.FileField(
+        upload_to="data/process_logs/history/", max_length=255, null=True, blank=True
+    )
+
 
     def __str__(self):
         return f"Info for {self.master_log.filename}"
