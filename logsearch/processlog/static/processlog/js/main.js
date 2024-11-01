@@ -1,6 +1,8 @@
 document.addEventListener("DOMContentLoaded", function () {
   const searchForm = document.getElementById("searchForm");
   const searchResults = document.getElementById("searchResults");
+  const commonSelectButton = document.getElementById("commonSelectButton");
+  let selectedLogIds = [];
 
   searchForm.addEventListener("submit", function (e) {
     e.preventDefault();
@@ -13,6 +15,7 @@ document.addEventListener("DOMContentLoaded", function () {
     if (oldQuestionForm) oldQuestionForm.innerHTML = "";
     document.getElementById("案件Card").style.display = "none";
     document.getElementById("questionCard").style.display = "none";
+    commonSelectButton.style.display = "none"; // Hide common select button
 
     fetch("/process-log/search-logs/", {
       method: "POST",
@@ -29,6 +32,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function displaySearchResults(results) {
     searchResults.innerHTML = ""; // Clear previous search results
+    selectedLogIds = []; // Clear selected IDs
 
     results.forEach((result) => {
       const resultCard = document.createElement("div");
@@ -36,8 +40,13 @@ document.addEventListener("DOMContentLoaded", function () {
       resultCard.innerHTML = `
         <div class="card result-card h-100">
             <div class="card-header result-header">
-                <h5 class="card-title mb-0">${result.filename}</h5>
+              <input type="checkbox" class="select-checkbox" data-log-id="${result.id}" style="margin-right: 10px;">
+              <div>
+                <h5 class="card-title mb-0 d-inline">${result.filename}</h5>
+              </div>
+              <div>
                 <small>${result.note}</small>
+              </div>
             </div>
             <div class="card-body">
                 <p class="card-text">操作時間: ${result.operation_time}</p>
@@ -46,41 +55,36 @@ document.addEventListener("DOMContentLoaded", function () {
                 <p class="card-text">手順の特徴: ${result.procedure_features || 'N/A'}</p>
                 <p class="card-text">データ特徴: ${result.data_features || 'N/A'}</p>
             </div>
-            <div class="card-footer d-flex justify-content-center">
-                <button class="btn btn-primary select-button w-50" data-log-id="${result.id}">選択</button>
-            </div>
         </div>
       `;
       searchResults.appendChild(resultCard);
     });
 
-    document.querySelectorAll(".select-button").forEach((button) => {
-      button.addEventListener("click", function () {
+    // Show common select button if there are results
+    if (results.length > 0) {
+      commonSelectButton.style.display = "block";
+    }
+
+    document.querySelectorAll(".select-checkbox").forEach((checkbox) => {
+      checkbox.addEventListener("change", function () {
         const logId = this.getAttribute("data-log-id");
-        selectLog(logId);
+        if (this.checked) {
+          selectedLogIds.push(logId);
+        } else {
+          selectedLogIds = selectedLogIds.filter(id => id !== logId);
+        }
       });
     });
   }
 
-  function selectLog(selectedLogId) {
-    // Clear any existing question forms
-    const questionForm = document.getElementById("questionForm");
-    if (questionForm) questionForm.innerHTML = "";
+  commonSelectButton.addEventListener("click", function () {
+    if (selectedLogIds.length > 0) {
+      show案件Form(selectedLogIds);
+    }
+  });
 
-    // Re-enable all logs (remove opacity)
-    document.querySelectorAll(".result-card").forEach((card) => {
-      card.style.opacity = "1"; // Restore opacity for all logs
-    });
-
-    // Dim all logs except the selected one
-    document.querySelectorAll(".result-card").forEach((card) => {
-      const button = card.querySelector(".select-button");
-      if (button.getAttribute("data-log-id") !== selectedLogId) {
-        card.style.opacity = "0.5"; // Dim the logs that are not selected
-      }
-    });
-
-    // Display and populate 案件 form
+  function show案件Form(logIds) {
+    // Display 案件 form
     const 案件Card = document.getElementById("案件Card");
     案件Card.style.display = "block";
     const 案件Form = document.getElementById("案件Form");
@@ -90,11 +94,11 @@ document.addEventListener("DOMContentLoaded", function () {
     `;
 
     document.getElementById("AnalysisButton").addEventListener("click", function () {
-      save案件内容(selectedLogId);  // Pass the selectedLogId to save the new log's 案件
+      save案件内容(logIds);  // Pass selected log IDs to save the new log's 案件
     });
   }
 
-  function save案件内容(selectedLogId) {
+  function save案件内容(logIds) {
     const 案件内容 = document.getElementById("案件内容").value;
 
     const questionCard = document.getElementById("questionCard");
@@ -103,13 +107,13 @@ document.addEventListener("DOMContentLoaded", function () {
       return;
     }
 
-    fetch(`/process-log/get-questions/${selectedLogId}/`)
+    fetch(`/process-log/get-questions/${logIds[0]}/`)  // Display questions for the first selected log as an example
       .then((response) => response.json())
-      .then((data) => displayQuestions(data, selectedLogId))  // Pass selectedLogId to display the new list of questions
+      .then((data) => displayQuestions(data, logIds))
       .catch((error) => console.error("Error:", error));
   }
 
-  function displayQuestions(questions, selectedLogId) {
+  function displayQuestions(questions, logIds) {
     const questionCard = document.getElementById("questionCard");
     questionCard.style.display = "block";  // Show the card
     const questionForm = document.getElementById("questionForm");
@@ -136,11 +140,11 @@ document.addEventListener("DOMContentLoaded", function () {
     questionForm.appendChild(generateButton);
 
     generateButton.addEventListener("click", function () {
-      generateProcedure(selectedLogId, questions);  // Pass selectedLogId to generate the procedure
+      generateProcedure(logIds, questions);  // Pass selected log IDs to generate the procedure
     });
   }
 
-  function generateProcedure(selectedLogId, questions) {
+  function generateProcedure(logIds, questions) {
     const answers = {};
     questions.forEach((question) => {
       const answer = document.getElementById(`question_${question.question_id}`).value;
@@ -150,8 +154,8 @@ document.addEventListener("DOMContentLoaded", function () {
     // Save the answers in localStorage for later use
     localStorage.setItem("procedureAnswers", JSON.stringify(answers));
 
-    // Redirect to log details page
-    window.location.href = `/process-log/log-details-view/${selectedLogId}`;
+    // Redirect to log details page of the first selected log as an example
+    window.location.href = `/process-log/log-details-view/${logIds[0]}`;
   }
 
   function getCookie(name) {
