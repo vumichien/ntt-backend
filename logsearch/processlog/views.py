@@ -241,7 +241,7 @@ def import_process_log(request):
             )
 
             # Tìm file history dựa trên filename cho mỗi MasterLog
-            history_file = os.path.join(log_folder, "history", f"{filename}_history.csv")
+            history_file = os.path.join(log_folder, "histories", f"{filename}_history.csv")
             history_file_path = history_file if os.path.exists(history_file) else None
 
             # Tạo hoặc cập nhật MasterLog và liên kết với MasterLogInfo

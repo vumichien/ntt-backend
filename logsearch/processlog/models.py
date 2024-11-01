@@ -24,7 +24,7 @@ class MasterLogInfo(models.Model):
 
 class MasterLog(models.Model):
     info = models.ForeignKey(
-        MasterLogInfo, on_delete=models.CASCADE, related_name="logs"
+        MasterLogInfo, on_delete=models.CASCADE, related_name="logs",null=True
     )
     filename = models.CharField(max_length=100)
     business = models.CharField(max_length=50, null=True, blank=True)
