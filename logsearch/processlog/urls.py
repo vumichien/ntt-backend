@@ -19,7 +19,7 @@ urlpatterns = [
         views.log_details_view,
         name="log_details_view",
     ),
-    path("get-questions/<int:log_id>/", views.get_questions, name="get_questions"),
+    path("get-questions/<str:content>/", views.get_questions_by_content, name="get_questions_by_content"),
     path(
         "generate-procedure/<int:log_id>/",
         views.generate_procedure,

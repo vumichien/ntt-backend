@@ -40,7 +40,7 @@ document.addEventListener("DOMContentLoaded", function () {
       resultCard.innerHTML = `
         <div class="card result-card h-100">
             <div class="card-header result-header">
-              <input type="checkbox" class="select-checkbox" data-log-id="${result.id}" style="margin-right: 10px;">
+              <input type="checkbox" class="select-checkbox" data-log-id="${result.id}" data-content="${result.content}" style="margin-right: 10px;">
               <div>
                 <h5 class="card-title mb-0 d-inline">${result.filename}</h5>
               </div>
@@ -107,11 +107,15 @@ document.addEventListener("DOMContentLoaded", function () {
       return;
     }
 
-    fetch(`/process-log/get-questions/${logIds[0]}/`)  // Display questions for the first selected log as an example
+    // Lấy content từ log đầu tiên trong danh sách logIds
+    const content = document.querySelector(`[data-log-id="${logIds[0]}"]`).getAttribute("data-content");
+
+    fetch(`/process-log/get-questions/${content}/`)  // Gọi API theo content
       .then((response) => response.json())
       .then((data) => displayQuestions(data, logIds))
       .catch((error) => console.error("Error:", error));
   }
+
 
   function displayQuestions(questions, logIds) {
     const questionCard = document.getElementById("questionCard");

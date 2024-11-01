@@ -104,13 +104,16 @@ def search_logs_by_content(request):
 
 
 @api_view(["GET"])
-def get_questions(request, log_id):
+def get_questions_by_content(request, content):
     try:
-        master_log = MasterLog.objects.get(id=log_id)
+        # Lấy một bản ghi đại diện cho content để lấy question_file
+        master_log_info = MasterLogInfo.objects.filter(content=content).first()
         questions = []
-        if master_log.question_file:
+
+        # Kiểm tra nếu có question_file trong MasterLogInfo
+        if master_log_info and master_log_info.question_file:
             with open(
-                master_log.question_file.path, newline="", encoding="utf-8"
+                master_log_info.question_file.path, newline="", encoding="utf-8"
             ) as csvfile:
                 reader = csv.DictReader(csvfile)
                 for row in reader:
@@ -121,8 +124,9 @@ def get_questions(request, log_id):
                         }
                     )
         return Response(questions)
-    except MasterLog.DoesNotExist:
-        return Response({"error": "Log not found"}, status=404)
+    except MasterLogInfo.DoesNotExist:
+        return Response({"error": "Content not found"}, status=404)
+
 
 
 @api_view(["POST"])
