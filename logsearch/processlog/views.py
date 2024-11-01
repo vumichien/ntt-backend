@@ -30,21 +30,15 @@ def log_details_view(request, log_id):
 def search_logs(request):
     search_query = request.data.get("search_query", "")
 
-    # Thực hiện tìm kiếm trong các trường phù hợp
-    master_logs = MasterLog.objects.filter(
-        Q(business__icontains=search_query) | Q(note__icontains=search_query)
+    # Thực hiện tìm kiếm trong các trường content, procedure_features và data_features của MasterLogInfo
+    matching_info = MasterLogInfo.objects.filter(
+        Q(content__icontains=search_query) |
+        Q(procedure_features__icontains=search_query) |
+        Q(data_features__icontains=search_query)
     ).distinct()
 
-    # Có thể mở rộng tìm kiếm trong LogEntry nếu cần
-    matching_log_entries = (
-        LogEntry.objects.filter(Q(explanation__icontains=search_query))
-        .values("master_log_id")
-        .distinct()
-    )
-
-    master_logs = master_logs.union(
-        MasterLog.objects.filter(id__in=matching_log_entries)
-    )
+    # Lấy các MasterLog liên kết với các MasterLogInfo phù hợp
+    master_logs = MasterLog.objects.filter(info__in=matching_info)
 
     results = []
     for log in master_logs:
@@ -78,6 +72,7 @@ def search_logs(request):
             )
 
     return Response(results)
+
 
 
 @api_view(["POST"])
@@ -211,7 +206,10 @@ def get_log_details(request, log_id):
 def import_process_log(request):
     log_folder = os.path.join(settings.BASE_DIR, "data", "process_logs")
 
-    # Bước 1: Nhập thông tin từ file log_info.csv để tạo hoặc cập nhật MasterLogInfo và MasterLog
+    # Dictionary để lưu trữ info_id tương ứng với từng filename trong log_info.csv
+    log_info_map = {}
+
+    # Bước 1: Nhập thông tin từ file log_info.csv để tạo MasterLogInfo và lưu info_id cho từng filename
     info_file = os.path.join(log_folder, "log_info.csv")
     with open(info_file, "r", encoding="utf-8") as file:
         csv_reader = csv.DictReader(file)
@@ -229,39 +227,19 @@ def import_process_log(request):
             question_file_path = question_file if os.path.exists(question_file) else None
             template_file_path = template_file if os.path.exists(template_file) else None
 
-            # Tạo hoặc cập nhật MasterLogInfo dựa trên content
-            master_log_info, created = MasterLogInfo.objects.update_or_create(
+            # Tạo một bản ghi mới trong MasterLogInfo và lưu lại info_id và filename
+            master_log_info = MasterLogInfo.objects.create(
                 content=content,
-                defaults={
-                    "procedure_features": procedure_features,
-                    "data_features": data_features,
-                    "question_file": question_file_path,
-                    "template_file": template_file_path,
-                }
+                procedure_features=procedure_features,
+                data_features=data_features,
+                question_file=question_file_path,
+                template_file=template_file_path,
             )
 
-            # Tìm file history dựa trên filename cho mỗi MasterLog
-            history_file = os.path.join(log_folder, "histories", f"{filename}_history.csv")
-            history_file_path = history_file if os.path.exists(history_file) else None
+            # Lưu lại info_id của MasterLogInfo mới tạo cho filename này
+            log_info_map[filename] = master_log_info.id
 
-            # Tạo hoặc cập nhật MasterLog và liên kết với MasterLogInfo
-            path_parts = info_file.split(os.path.sep)
-            business = path_parts[-3]
-            note = path_parts[-2]
-
-            master_log, created = MasterLog.objects.update_or_create(
-                filename=filename,
-                defaults={
-                    "info": master_log_info,
-                    "business": business,
-                    "operation_time": "00:00:00",  # Sẽ cập nhật ở bước 2
-                    "total_operations": 0,  # Sẽ cập nhật ở bước 2
-                    "note": note,
-                    "history_file": history_file_path,
-                }
-            )
-
-    # Bước 2: Nhập các file log chi tiết và cập nhật LogEntry
+    # Bước 2: Nhập các file log chi tiết và tạo MasterLog với info_id tương ứng từ log_info_map
     csv_files = glob.glob(os.path.join(log_folder, "*", "*", "*.log.csv"))
     for csv_file in csv_files:
         # Extract filename without prefix and extension
@@ -272,12 +250,21 @@ def import_process_log(request):
         else:
             continue  # Skip this file if it doesn't match the expected pattern
 
-        # Load the corresponding MasterLog by filename
-        try:
-            master_log = MasterLog.objects.get(filename=filename)
-        except MasterLog.DoesNotExist:
-            continue
+        # Load info_id từ log_info_map
+        info_id = log_info_map.get(filename)
+        if not info_id:
+            continue  # Skip if there's no matching info_id for this filename in log_info_map
 
+        # Load additional details for MasterLog
+        path_parts = csv_file.split(os.path.sep)
+        business = path_parts[-3]
+        note = path_parts[-2]
+
+        # Tìm file history dựa trên filename cho mỗi MasterLog
+        history_file = os.path.join(log_folder, "histories", f"{filename}_history.csv")
+        history_file_path = history_file if os.path.exists(history_file) else None
+
+        # Tạo hoặc cập nhật MasterLog với info_id từ log_info_map
         with open(csv_file, "r", encoding="utf-8") as file:
             csv_reader = csv.DictReader(file)
             rows = list(csv_reader)
@@ -306,10 +293,18 @@ def import_process_log(request):
 
         total_operations = len(rows)
 
-        # Cập nhật thông tin operation_time và total_operations cho MasterLog
-        master_log.operation_time = operation_time
-        master_log.total_operations = total_operations
-        master_log.save()
+        # Tạo hoặc cập nhật MasterLog và liên kết với MasterLogInfo
+        master_log, created = MasterLog.objects.update_or_create(
+            filename=filename,
+            defaults={
+                "info_id": info_id,  # Liên kết với MasterLogInfo dựa trên filename
+                "business": business,
+                "operation_time": operation_time,
+                "total_operations": total_operations,
+                "note": note,
+                "history_file": history_file_path,
+            }
+        )
 
         # Clear existing LogEntries for this master_log
         LogEntry.objects.filter(master_log=master_log).delete()
