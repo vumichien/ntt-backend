@@ -210,6 +210,58 @@ def get_log_details(request, log_id):
 @api_view(["GET"])
 def import_process_log(request):
     log_folder = os.path.join(settings.BASE_DIR, "data", "process_logs")
+
+    # Bước 1: Nhập thông tin từ file log_info.csv để tạo hoặc cập nhật MasterLogInfo và MasterLog
+    info_file = os.path.join(log_folder, "log_info.csv")
+    with open(info_file, "r", encoding="utf-8") as file:
+        csv_reader = csv.DictReader(file)
+
+        for row in csv_reader:
+            filename = row["filename"]
+            content = row["content"]
+            procedure_features = row["procedure_features"]
+            data_features = row["data_features"]
+
+            # Tìm file question và template dựa trên content
+            question_file = os.path.join(log_folder, "questions", f"{content}_question.csv")
+            template_file = os.path.join(log_folder, "templates", f"{content}_template.csv")
+
+            question_file_path = question_file if os.path.exists(question_file) else None
+            template_file_path = template_file if os.path.exists(template_file) else None
+
+            # Tạo hoặc cập nhật MasterLogInfo dựa trên content
+            master_log_info, created = MasterLogInfo.objects.update_or_create(
+                content=content,
+                defaults={
+                    "procedure_features": procedure_features,
+                    "data_features": data_features,
+                    "question_file": question_file_path,
+                    "template_file": template_file_path,
+                }
+            )
+
+            # Tìm file history dựa trên filename cho mỗi MasterLog
+            history_file = os.path.join(log_folder, "history", f"{filename}_history.csv")
+            history_file_path = history_file if os.path.exists(history_file) else None
+
+            # Tạo hoặc cập nhật MasterLog và liên kết với MasterLogInfo
+            path_parts = info_file.split(os.path.sep)
+            business = path_parts[-3]
+            note = path_parts[-2]
+
+            master_log, created = MasterLog.objects.update_or_create(
+                filename=filename,
+                defaults={
+                    "info": master_log_info,
+                    "business": business,
+                    "operation_time": "00:00:00",  # Sẽ cập nhật ở bước 2
+                    "total_operations": 0,  # Sẽ cập nhật ở bước 2
+                    "note": note,
+                    "history_file": history_file_path,
+                }
+            )
+
+    # Bước 2: Nhập các file log chi tiết và cập nhật LogEntry
     csv_files = glob.glob(os.path.join(log_folder, "*", "*", "*.log.csv"))
     for csv_file in csv_files:
         # Extract filename without prefix and extension
@@ -220,9 +272,11 @@ def import_process_log(request):
         else:
             continue  # Skip this file if it doesn't match the expected pattern
 
-        path_parts = csv_file.split(os.path.sep)
-        business = path_parts[-3]
-        note = path_parts[-2]
+        # Load the corresponding MasterLog by filename
+        try:
+            master_log = MasterLog.objects.get(filename=filename)
+        except MasterLog.DoesNotExist:
+            continue
 
         with open(csv_file, "r", encoding="utf-8") as file:
             csv_reader = csv.DictReader(file)
@@ -252,35 +306,16 @@ def import_process_log(request):
 
         total_operations = len(rows)
 
-        # Tìm kiếm file question và template tương ứng
-        question_file = os.path.join(
-            log_folder, "questions", f"{filename}_question.csv"
-        )
-        template_file = os.path.join(
-            log_folder, "templates", f"{filename}_template.csv"
-        )
+        # Cập nhật thông tin operation_time và total_operations cho MasterLog
+        master_log.operation_time = operation_time
+        master_log.total_operations = total_operations
+        master_log.save()
 
-        # Kiểm tra nếu file question và template tồn tại
-        question_file_path = question_file if os.path.exists(question_file) else None
-        template_file_path = template_file if os.path.exists(template_file) else None
-
-        master_log, created = MasterLog.objects.update_or_create(
-            filename=filename,
-            defaults={
-                "business": business,
-                "operation_time": operation_time,
-                "total_operations": total_operations,
-                "note": note,
-                "question_file": question_file_path,
-                "template_file": template_file_path,
-            },
-        )
-
+        # Clear existing LogEntries for this master_log
         LogEntry.objects.filter(master_log=master_log).delete()
 
         valid_fields = [
-            f.name
-            for f in LogEntry._meta.get_fields()
+            f.name for f in LogEntry._meta.get_fields()
             if f.name != "id" and f.name != "master_log"
         ]
 
@@ -296,53 +331,21 @@ def import_process_log(request):
 
             # Convert numeric fields to float
             numeric_fields = [
-                "win_hwnd",
-                "app_pid",
-                "ope_boxw",
-                "ope_boxh",
-                "ope_boxt",
-                "ope_boxl",
-                "period",
+                "win_hwnd", "app_pid", "ope_boxw", "ope_boxh", "ope_boxt", "ope_boxl", "period",
             ]
             for field in numeric_fields:
                 if field in entry_data and entry_data[field]:
                     try:
                         entry_data[field] = float(entry_data[field])
                     except ValueError:
-                        # If conversion fails, set to None
                         entry_data[field] = None
 
             if "captureChangeFlg" in entry_data:
                 entry_data["captureChangeFlg"] = (
-                    entry_data["captureChangeFlg"] == "True"
-                    if entry_data["captureChangeFlg"]
-                    else None
+                    entry_data["captureChangeFlg"] == "True" if entry_data["captureChangeFlg"] else None
                 )
 
             LogEntry.objects.create(master_log=master_log, **entry_data)
-        # Nhập dữ liệu vào bảng MasterLogInfo từ file CSV chứa các thông tin bổ sung
-    info_file = os.path.join(log_folder, "log_info.csv")
-    with open(info_file, "r", encoding="utf-8") as file:
-        csv_reader = csv.DictReader(file)
-        for row in csv_reader:
-            filename = row["filename"]
-            content = row["content"]
-            procedure_features = row["procedure_features"]
-            data_features = row["data_features"]
-
-            try:
-                master_log = MasterLog.objects.get(filename=filename)
-                MasterLogInfo.objects.update_or_create(
-                    master_log=master_log,
-                    defaults={
-                        "content": content,
-                        "procedure_features": procedure_features,
-                        "data_features": data_features,
-                    },
-                )
-            except MasterLog.DoesNotExist:
-                # Nếu MasterLog không tồn tại, bỏ qua
-                continue
 
     return Response(
         {"message": "CSV files processed successfully"}, status=status.HTTP_200_OK
