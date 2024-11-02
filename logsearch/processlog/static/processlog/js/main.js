@@ -7,8 +7,9 @@ document.addEventListener("DOMContentLoaded", function () {
   let questions = [];
   let currentQuestionIndex = 0;
   let templateSteps = [];
+  let answers = {}; // Lưu trữ câu trả lời cho mỗi câu hỏi
 
-  templateDisplay.style.display = "none";
+  templateDisplay.style.display = "none"; // Ẩn templateDisplay khi trang vừa tải
 
   searchForm.addEventListener("submit", function (e) {
     e.preventDefault();
@@ -33,6 +34,7 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   function resetDisplay() {
+    // Đặt lại tất cả các giao diện và giá trị khi tìm kiếm mới
     const old案件Form = document.getElementById("案件Form");
     const oldQuestionForm = document.getElementById("questionForm");
     if (old案件Form) old案件Form.innerHTML = "";
@@ -42,6 +44,9 @@ document.addEventListener("DOMContentLoaded", function () {
     commonSelectButton.style.display = "none";
     templateDisplay.style.display = "none";
     templateDisplay.innerHTML = "";
+    questions = [];
+    currentQuestionIndex = 0;
+    answers = {};
   }
 
   function displaySearchResults(results) {
@@ -119,30 +124,66 @@ document.addEventListener("DOMContentLoaded", function () {
     currentQuestionIndex = index;
     const questionCard = document.getElementById("questionCard");
     questionCard.style.display = "block";
+
     const questionForm = document.getElementById("questionForm");
-    questionForm.innerHTML = `
+    const questionContainer = document.createElement("div");
+    questionContainer.classList.add("question-container");
+    questionContainer.innerHTML = `
       <label for="question_${questions[index].question_id}" class="form-label">${questions[index].question_text}</label>
-      <input type="text" class="form-control" id="question_${questions[index].question_id}">
-      <button id="nextButton" class="btn btn-primary mt-3">→</button>
+      <input type="text" class="form-control" id="question_${questions[index].question_id}" value="${answers[questions[index].question_id] || ''}">
     `;
 
-    document.getElementById("nextButton").addEventListener("click", handleNextQuestion);
-    document.getElementById(`question_${questions[index].question_id}`).addEventListener("keydown", (event) => {
+    questionForm.appendChild(questionContainer);
+
+    const inputElement = document.getElementById(`question_${questions[index].question_id}`);
+    inputElement.addEventListener("keydown", function (event) {
       if (event.key === "Enter") handleNextQuestion();
     });
 
+    // Xóa nút "Next" cũ trước khi thêm nút mới
+    const existingNextButton = document.getElementById("nextButton");
+    if (existingNextButton) existingNextButton.remove();
+
+    // Thêm nút "Next" cho câu hỏi hiện tại
+    if (index < questions.length - 1) {
+      addNextButton();
+    } else {
+      addGenerateButton();
+    }
+
     displayTemplateStep(index);
+  }
+
+  function addNextButton() {
+    const nextButton = document.createElement("button");
+    nextButton.id = "nextButton";
+    nextButton.className = "btn btn-primary mt-3";
+    nextButton.textContent = "→";
+    nextButton.addEventListener("click", handleNextQuestion);
+    document.getElementById("questionForm").appendChild(nextButton);
+  }
+
+  function addGenerateButton() {
+    const generateButton = document.createElement("button");
+    generateButton.id = "generateButton";
+    generateButton.className = "btn btn-primary mt-3";
+    generateButton.textContent = "作業手順生成";
+    generateButton.addEventListener("click", generateProcedure);
+    document.getElementById("questionForm").appendChild(generateButton);
   }
 
   function handleNextQuestion() {
     const answer = document.getElementById(`question_${questions[currentQuestionIndex].question_id}`).value;
     const containsLetterAndNumber = /[a-zA-Z]/.test(answer) && /\d/.test(answer);
 
-    const storedAnswers = JSON.parse(localStorage.getItem("procedureAnswers") || "{}");
-    storedAnswers[questions[currentQuestionIndex].question_id] = answer;
-    localStorage.setItem("procedureAnswers", JSON.stringify(storedAnswers));
+    answers[questions[currentQuestionIndex].question_id] = answer; // Lưu câu trả lời
 
-    currentQuestionIndex += containsLetterAndNumber ? 2 : 1;
+    // Nếu câu trả lời có cả chữ và số và không phải câu hỏi cuối cùng hoặc gần cuối, nhảy qua hai câu
+    if (containsLetterAndNumber && currentQuestionIndex + 2 < questions.length) {
+      currentQuestionIndex += 2;
+    } else {
+      currentQuestionIndex += 1;
+    }
 
     if (currentQuestionIndex < questions.length) {
       displayQuestion(currentQuestionIndex);
@@ -154,39 +195,49 @@ document.addEventListener("DOMContentLoaded", function () {
   function displayTemplateStep(index) {
     const step = templateSteps.find(step => step.input_id == questions[index].question_id);
     if (step) {
-      templateDisplay.innerHTML = `
-        <div class="timeline-item">
-          <div class="image-container">
-            <img src="/media/${step.capimg}" alt="Captured" class="captured-image">
-          </div>
-          <div class="text-content">
-            <p>${step.description}</p>
-          </div>
-        </div>
-      `;
-    }
-  }
-
-  function displayRemainingTemplateSteps() {
-    templateDisplay.innerHTML = templateSteps.slice(currentQuestionIndex).map(step => `
-      <div class="timeline-item">
+      const stepContainer = document.createElement("div");
+      stepContainer.className = "timeline-item";
+      stepContainer.innerHTML = `
         <div class="image-container">
           <img src="/media/${step.capimg}" alt="Captured" class="captured-image">
         </div>
         <div class="text-content">
-          <p>${step.description}</p>
+          <p>${step.description.replace(`{${questions[index].question_id}}`, answers[questions[index].question_id] || '')}</p>
         </div>
-      </div>
-    `).join("");
+      `;
+      templateDisplay.appendChild(stepContainer);
+    }
+  }
+
+  function displayRemainingTemplateSteps() {
+    const remainingSteps = templateSteps.filter(step => !questions.some(q => q.question_id == step.input_id));
+    remainingSteps.forEach((step) => {
+      const stepContainer = document.createElement("div");
+      stepContainer.className = "timeline-item";
+      stepContainer.innerHTML = `
+        <div class="image-container">
+          <img src="/media/${step.capimg}" alt="Captured" class="captured-image">
+        </div>
+        <div class="text-content">
+          <p>${step.description.replace(/\{(\d+)\}/g, (match, id) => answers[id] || '')}</p>
+        </div>
+      `;
+      templateDisplay.appendChild(stepContainer);
+    });
+  }
+
+  function generateProcedure() {
+    localStorage.setItem("procedureAnswers", JSON.stringify(answers));
+    window.location.href = `/process-log/log-details-view/${selectedLogIds[0]}`;
   }
 
   function getCookie(name) {
     let cookieValue = null;
     if (document.cookie && document.cookie !== "") {
       const cookies = document.cookie.split(";");
-      for (let cookie of cookies) {
-        cookie = cookie.trim();
-        if (cookie.startsWith(`${name}=`)) {
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === name + "=") {
           cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
           break;
         }
