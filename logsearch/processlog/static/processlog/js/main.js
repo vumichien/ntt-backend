@@ -26,7 +26,10 @@ document.addEventListener("DOMContentLoaded", function () {
       body: JSON.stringify({ search_query: searchQuery }),
     })
       .then((response) => response.json())
-      .then((data) => displaySearchResults(data))
+      .then((data) => {
+        displaySearchResults(data);
+        show案件Form();  // Automatically show the 案件 form after search results
+      })
       .catch((error) => console.error("Error:", error));
   });
 
@@ -77,33 +80,28 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  commonSelectButton.addEventListener("click", function () {
-    if (selectedLogIds.length > 0) {
-      show案件Form(selectedLogIds);
-    }
-  });
-
-  function show案件Form(logIds) {
+  function show案件Form() {
     // Display 案件 form
     const 案件Card = document.getElementById("案件Card");
     案件Card.style.display = "block";
     const 案件Form = document.getElementById("案件Form");
     案件Form.innerHTML = `
       <input type="text" class="form-control" id="案件内容" placeholder="案件内容">
-      <button id="AnalysisButton" class="btn btn-primary mt-2">分析</button>
     `;
-
-    document.getElementById("AnalysisButton").addEventListener("click", function () {
-      save案件内容(logIds);  // Pass selected log IDs to save the new log's 案件
-    });
   }
+
+  commonSelectButton.addEventListener("click", function () {
+    if (selectedLogIds.length > 0) {
+      save案件内容(selectedLogIds);
+    }
+  });
 
   function save案件内容(logIds) {
     const 案件内容 = document.getElementById("案件内容").value;
 
     const questionCard = document.getElementById("questionCard");
     if (questionCard.style.display === "block") {
-      // 問題がすでに表示されている場合は何もしない
+      // 問題がすでに表示されている場合 là nothing needed
       return;
     }
 
@@ -115,7 +113,6 @@ document.addEventListener("DOMContentLoaded", function () {
       .then((data) => displayQuestions(data, logIds))
       .catch((error) => console.error("Error:", error));
   }
-
 
   function displayQuestions(questions, logIds) {
     const questionCard = document.getElementById("questionCard");
