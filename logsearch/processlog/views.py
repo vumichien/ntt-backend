@@ -106,11 +106,12 @@ def search_logs_by_content(request):
 @api_view(["GET"])
 def get_questions_by_content(request, content):
     try:
-        # Lấy một bản ghi đại diện cho content để lấy question_file
+        # Lấy một bản ghi đại diện cho content để lấy question_file và template_file
         master_log_info = MasterLogInfo.objects.filter(content=content).first()
         questions = []
+        template_steps = []
 
-        # Kiểm tra nếu có question_file trong MasterLogInfo
+        # Lấy câu hỏi từ question_file
         if master_log_info and master_log_info.question_file:
             with open(
                 master_log_info.question_file.path, newline="", encoding="utf-8"
@@ -123,9 +124,30 @@ def get_questions_by_content(request, content):
                             "question_text": row["question_text"],
                         }
                     )
-        return Response(questions)
+
+        # Lấy các bước từ template_file
+        if master_log_info and master_log_info.template_file:
+            with open(
+                master_log_info.template_file.path, newline="", encoding="utf-8"
+            ) as csvfile:
+                reader = csv.DictReader(csvfile)
+                for row in reader:
+                    template_steps.append(
+                        {
+                            "step_id": row["step_id"],
+                            "description": row["description"],
+                            "capimg": row["capimg"],
+                            "input_id": row.get("input_id"),  # input_id để liên kết với câu hỏi
+                        }
+                    )
+
+        return Response({
+            "questions": questions,
+            "templateSteps": template_steps
+        })
     except MasterLogInfo.DoesNotExist:
         return Response({"error": "Content not found"}, status=404)
+
 
 
 

@@ -34,15 +34,24 @@
 
 
 
-<!-- Question Form (in a card) -->
-<div id="questionCard" class="card mt-4" style="display: none;">
+<!-- Question and Template Container -->
+<div class="row">
+  <!-- Question Form (in a card, left side) -->
+  <div id="questionCard" class="col-md-6 card mt-4" style="display: none;">
     <div class="card-header result-header text-white">
-        <h5 class="card-title">操作項目について質問</h5>
+      <h5 class="card-title">操作項目について質問</h5>
     </div>
     <div class="card-body">
-        <div id="questionForm"></div> <!-- Question form will be dynamically inserted here -->
+      <div id="questionForm"></div>
     </div>
+  </div>
+
+  <!-- Template Display (right side) -->
+  <div id="templateDisplay" class="col-md-6 mt-4"></div>
 </div>
+
+
+
 
 {% endblock %}
 

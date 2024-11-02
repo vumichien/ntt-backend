@@ -3,6 +3,9 @@ document.addEventListener("DOMContentLoaded", function () {
   const searchResults = document.getElementById("searchResults");
   const commonSelectButton = document.getElementById("commonSelectButton");
   let selectedLogIds = [];
+  let questions = [];
+  let currentQuestionIndex = 0;
+  let templateSteps = [];
 
   searchForm.addEventListener("submit", function (e) {
     e.preventDefault();
@@ -15,7 +18,7 @@ document.addEventListener("DOMContentLoaded", function () {
     if (oldQuestionForm) oldQuestionForm.innerHTML = "";
     document.getElementById("案件Card").style.display = "none";
     document.getElementById("questionCard").style.display = "none";
-    commonSelectButton.style.display = "none"; // Hide common select button
+    commonSelectButton.style.display = "none";
 
     fetch("/process-log/search-logs/", {
       method: "POST",
@@ -28,14 +31,14 @@ document.addEventListener("DOMContentLoaded", function () {
       .then((response) => response.json())
       .then((data) => {
         displaySearchResults(data);
-        show案件Form();  // Automatically show the 案件 form after search results
+        show案件Form(); // Automatically show the 案件 form after search results
       })
       .catch((error) => console.error("Error:", error));
   });
 
   function displaySearchResults(results) {
-    searchResults.innerHTML = ""; // Clear previous search results
-    selectedLogIds = []; // Clear selected IDs
+    searchResults.innerHTML = "";
+    selectedLogIds = [];
 
     results.forEach((result) => {
       const resultCard = document.createElement("div");
@@ -63,7 +66,6 @@ document.addEventListener("DOMContentLoaded", function () {
       searchResults.appendChild(resultCard);
     });
 
-    // Show common select button if there are results
     if (results.length > 0) {
       commonSelectButton.style.display = "block";
     }
@@ -81,89 +83,109 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function show案件Form() {
-    // Display 案件 form
     const 案件Card = document.getElementById("案件Card");
     案件Card.style.display = "block";
     const 案件Form = document.getElementById("案件Form");
-    案件Form.innerHTML = `
-      <input type="text" class="form-control" id="案件内容" placeholder="案件内容">
-    `;
+    案件Form.innerHTML = `<input type="text" class="form-control" id="案件内容" placeholder="案件内容">`;
   }
 
   commonSelectButton.addEventListener("click", function () {
     if (selectedLogIds.length > 0) {
-      save案件内容(selectedLogIds);
+      const content = document.querySelector(`[data-log-id="${selectedLogIds[0]}"]`).getAttribute("data-content");
+      fetchQuestionsAndTemplate(content);
     }
   });
 
-  function save案件内容(logIds) {
-    const 案件内容 = document.getElementById("案件内容").value;
-
-    const questionCard = document.getElementById("questionCard");
-    if (questionCard.style.display === "block") {
-      // 問題がすでに表示されている場合 là nothing needed
-      return;
-    }
-
-    // Lấy content từ log đầu tiên trong danh sách logIds
-    const content = document.querySelector(`[data-log-id="${logIds[0]}"]`).getAttribute("data-content");
-
-    fetch(`/process-log/get-questions/${content}/`)  // Gọi API theo content
+  function fetchQuestionsAndTemplate(content) {
+    fetch(`/process-log/get-questions/${content}/`)
       .then((response) => response.json())
-      .then((data) => displayQuestions(data, logIds))
+      .then((data) => {
+        questions = data.questions;
+        templateSteps = data.templateSteps;
+        displayQuestion(0);
+      })
       .catch((error) => console.error("Error:", error));
   }
 
-  function displayQuestions(questions, logIds) {
+  function displayQuestion(index) {
+    currentQuestionIndex = index;
     const questionCard = document.getElementById("questionCard");
-    questionCard.style.display = "block";  // Show the card
+    questionCard.style.display = "block";
     const questionForm = document.getElementById("questionForm");
+    questionForm.innerHTML = `
+      <label for="question_${questions[index].question_id}" class="form-label">${questions[index].question_text}</label>
+      <input type="text" class="form-control" id="question_${questions[index].question_id}">
+      <button id="nextButton" class="btn btn-primary mt-3">→</button>
+    `;
 
-    const formRow = document.createElement("div");
-    formRow.className = "row g-3";
-
-    questions.forEach((question, index) => {
-      const col = document.createElement("div");
-      col.className = "col-md-6";
-      col.innerHTML = `
-        <label for="question_${question.question_id}" class="form-label">${index + 1}. ${question.question_text}</label>
-        <input type="text" class="form-control" id="question_${question.question_id}">
-      `;
-      formRow.appendChild(col);
+    document.getElementById("nextButton").addEventListener("click", handleNextQuestion);
+    document.getElementById(`question_${questions[index].question_id}`).addEventListener("keydown", function (event) {
+      if (event.key === "Enter") {
+        handleNextQuestion();
+      }
     });
 
-    questionForm.appendChild(formRow);
-
-    const generateButton = document.createElement("button");
-    generateButton.id = "generateButton";
-    generateButton.className = "btn btn-primary mt-3";
-    generateButton.textContent = "作業手順生成";
-    questionForm.appendChild(generateButton);
-
-    generateButton.addEventListener("click", function () {
-      generateProcedure(logIds, questions);  // Pass selected log IDs to generate the procedure
-    });
+    displayTemplateStep(index);
   }
 
-  function generateProcedure(logIds, questions) {
-    const answers = {};
-    questions.forEach((question) => {
-      const answer = document.getElementById(`question_${question.question_id}`).value;
-      answers[question.question_id] = answer;
-    });
+  function handleNextQuestion() {
+    const answer = document.getElementById(`question_${questions[currentQuestionIndex].question_id}`).value;
+    const containsLetterAndNumber = /[a-zA-Z]/.test(answer) && /\d/.test(answer);
 
-    // Save the answers in localStorage for later use
-    localStorage.setItem("procedureAnswers", JSON.stringify(answers));
+    const storedAnswers = JSON.parse(localStorage.getItem("procedureAnswers") || "{}");
+    storedAnswers[questions[currentQuestionIndex].question_id] = answer;
+    localStorage.setItem("procedureAnswers", JSON.stringify(storedAnswers));
 
-    // Redirect to log details page of the first selected log as an example
-    window.location.href = `/process-log/log-details-view/${logIds[0]}`;
+    if (containsLetterAndNumber) {
+      currentQuestionIndex += 2;
+    } else {
+      currentQuestionIndex += 1;
+    }
+
+    if (currentQuestionIndex < questions.length) {
+      displayQuestion(currentQuestionIndex);
+    } else {
+      displayRemainingTemplateSteps();
+    }
   }
+
+  function displayTemplateStep(index) {
+      const templateDisplay = document.getElementById("templateDisplay");
+      const step = templateSteps.find(step => step.input_id == questions[index].question_id);
+
+      if (step) {
+        templateDisplay.innerHTML = `
+          <div class="timeline-item">
+            <div class="image-container">
+              <img src="/media/${step.capimg}" alt="Captured" class="captured-image">
+            </div>
+            <div class="text-content">
+              <p>${step.description}</p>
+            </div>
+          </div>
+        `;
+      }
+    }
+
+  function displayRemainingTemplateSteps() {
+      const templateDisplay = document.getElementById("templateDisplay");
+      templateDisplay.innerHTML = templateSteps.slice(currentQuestionIndex).map(step => `
+        <div class="timeline-item">
+          <div class="image-container">
+            <img src="/media/${step.capimg}" alt="Captured" class="captured-image">
+          </div>
+          <div class="text-content">
+            <p>${step.description}</p>
+          </div>
+        </div>
+      `).join("");
+  }
+
 
   function getCookie(name) {
     let cookieValue = null;
     if (document.cookie && document.cookie !== "") {
       const cookies = document.cookie.split(";");
-
       for (let i = 0; i < cookies.length; i++) {
         const cookie = cookies[i].trim();
         if (cookie.substring(0, name.length + 1) === name + "=") {
