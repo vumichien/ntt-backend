@@ -13,16 +13,8 @@ urlpatterns = [
         name="search_logs_by_content",
     ),
     path("log-details/<int:log_id>/", views.get_log_details, name="log_details"),
-    path("get-log-info/<int:log_id>/", views.get_log_info, name="get_log_info"),
-    path(
-        "log-details-view/<int:log_id>",
-        views.log_details_view,
-        name="log_details_view",
-    ),
+    path("get-log-info/<str:content>/", views.get_log_info, name="get_log_info"),
+    path("log-details-view/<str:content>/", views.log_details_view, name="log_details_view"),
     path("get-questions/<str:content>/", views.get_questions_by_content, name="get_questions_by_content"),
-    path(
-        "generate-procedure/<int:log_id>/",
-        views.generate_procedure,
-        name="generate_procedure",
-    ),
+    path("generate-procedure/<str:content>/", views.generate_procedure, name="generate_procedure"),
 ]

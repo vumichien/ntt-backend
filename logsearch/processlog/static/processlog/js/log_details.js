@@ -1,22 +1,24 @@
 document.addEventListener('DOMContentLoaded', function() {
     const pathParts = window.location.pathname.split('/');
-    const logId = pathParts[pathParts.length - 1];
+    const content = decodeURIComponent(pathParts[pathParts.length - 2]);
+    console.log("Content passed to log details:", content);
+
+    // Đặt trực tiếp `operationTime` bằng `content`
+    document.getElementById('operationTime').textContent = content;
 
     // Lấy câu trả lời từ localStorage
     const answers = JSON.parse(localStorage.getItem('procedureAnswers') || '{}');
 
-    if (logId && answers) {
-        generateProcedure(logId, answers);  // Gọi API để lấy các bước từ template với câu trả lời
-        fetchLogInfo(logId);
+    if (content && answers) {
+        generateProcedure(content, answers);  // Gọi API để lấy các bước từ template với câu trả lời
     }
 
     document.getElementById('backButton').addEventListener('click', function() {
         window.history.back();
     });
 
-    // Hàm để gọi API và truyền câu trả lời
-    function generateProcedure(logId, answers) {
-        fetch(`/process-log/generate-procedure/${logId}/`, {
+    function generateProcedure(content, answers) {
+        fetch(`/process-log/generate-procedure/${content}/`, {
             method: 'POST',
             headers: {
                 "Content-Type": "application/json",
@@ -25,7 +27,11 @@ document.addEventListener('DOMContentLoaded', function() {
             body: JSON.stringify({ answers: answers })
         })
         .then(response => response.json())
-        .then(data => displayProcedure(data))
+        .then(data => {
+            console.log("Procedure steps:", data);
+            document.getElementById('totalOperations').textContent = data.length; // Số bước của flow
+            displayProcedure(data);
+        })
         .catch(error => console.error('Error:', error));
     }
 
@@ -54,17 +60,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 timeline.appendChild(arrow);
             }
         });
-    }
-
-    // Lấy thông tin tóm tắt về log
-    function fetchLogInfo(logId) {
-        fetch(`/process-log/get-log-info/${logId}/`)
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById('totalOperations').textContent = data.total_operations;
-                document.getElementById('operationTime').textContent = data.operation_time;
-            })
-            .catch(error => console.error('Error:', error));
     }
 
     function getCookie(name) {

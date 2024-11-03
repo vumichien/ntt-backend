@@ -250,7 +250,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function generateProcedure() {
     localStorage.setItem("procedureAnswers", JSON.stringify(answers));
-    window.location.href = `/process-log/log-details-view/${selectedLogIds[0]}`;
+    const content = document.querySelector(`[data-log-id="${selectedLogIds[0]}"]`).getAttribute("data-content");
+    window.location.href = `/process-log/log-details-view/${content}`;
   }
 
   function getCookie(name) {

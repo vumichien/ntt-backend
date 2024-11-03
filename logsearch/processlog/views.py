@@ -22,9 +22,8 @@ def index(
     return render(request, "processlog/process_log.html")
 
 
-def log_details_view(request, log_id):
-    return render(request, "processlog/process_log_details.html", {"log_id": log_id})
-
+def log_details_view(request, content):
+    return render(request, "processlog/process_log_details.html", {"content": content})
 
 @api_view(["POST"])
 def search_logs(request):
@@ -149,31 +148,34 @@ def get_questions_by_content(request, content):
         return Response({"error": "Content not found"}, status=404)
 
 
-
-
 @api_view(["POST"])
-def generate_procedure(request, log_id):
+def generate_procedure(request, content):
     try:
-        master_log = MasterLog.objects.get(id=log_id)
+        # Lấy một bản ghi đầu tiên từ các kết quả trả về để tránh nhân lên
+        master_log_info = MasterLogInfo.objects.filter(content=content).first()
+
+        if not master_log_info:
+            return Response({"error": "Log not found"}, status=404)
+
         answers = request.data.get("answers", {})
         steps = []
 
-        if master_log.info.template_file:
-            with open(master_log.info.template_file.path, newline="", encoding="utf-8") as csvfile:
+        # Đọc từ template_file của bản ghi đầu tiên
+        if master_log_info.template_file:
+            with open(master_log_info.template_file.path, newline="", encoding="utf-8") as csvfile:
                 reader = csv.DictReader(csvfile)
                 for row in reader:
                     input_id = row.get("input_id")
                     description = row["description"]
 
-                    # Nếu input_id có trong answers, thay thế placeholder; nếu không, chỉ thêm bước vào mà không cần thay thế
+                    # Nếu input_id có trong answers, thay thế placeholder
                     if input_id:
                         if input_id in answers:
                             description = description.replace(f"{{{input_id}}}", answers[input_id])
                         else:
-                            # Bỏ qua bước này nếu input_id có nhưng không nằm trong answers
+                            # Bỏ qua bước này nếu input_id không nằm trong answers
                             continue
 
-                    # Thêm bước vào flow
                     steps.append({
                         "step_id": row["step_id"],
                         "description": description,
@@ -181,10 +183,8 @@ def generate_procedure(request, log_id):
                     })
 
         return Response(steps)
-    except MasterLog.DoesNotExist:
-        return Response({"error": "Log not found"}, status=404)
-
-
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)
 
 
 @api_view(["GET"])
@@ -448,38 +448,31 @@ def get_log_entries(request, master_log_id):
 
 
 @api_view(["GET"])
-def get_log_info(request, log_id):
+def get_log_info(request, content):
     try:
-        # Fetch the master log by ID
-        master_log = MasterLog.objects.get(id=log_id)
+        # Lấy tất cả các bản ghi MasterLogInfo có content khớp
+        master_log_infos = MasterLogInfo.objects.filter(content=content)
 
-        # Initialize variables
+        # Kiểm tra nếu có bản ghi nào, nếu không trả về lỗi
+        if not master_log_infos.exists():
+            return JsonResponse({"error": "Log not found"}, status=404)
+
         total_operations = 0
-        content_info = None
+        # Duyệt qua từng bản ghi MasterLogInfo để đếm số bước từ template_file của từng bản ghi
+        for master_log_info in master_log_infos:
+            if master_log_info.template_file:
+                with open(master_log_info.template_file.path, newline="", encoding="utf-8") as csvfile:
+                    reader = csv.DictReader(csvfile)
+                    total_operations += sum(1 for row in reader)
 
-        # Fetch the associated MasterLogInfo for content
-        try:
-            master_log_info = MasterLogInfo.objects.get(master_log=master_log)
-            content_info = master_log_info.content  # Get the content from MasterLogInfo
-        except MasterLogInfo.DoesNotExist:
-            content_info = "No content available"
+        # Chỉ lấy `content` từ bản ghi đầu tiên
+        operation_time = master_log_infos.first().content
 
-        # Count total operations based on template_file (instead of the original log)
-        if master_log.template_file:
-            with open(
-                master_log.template_file.path, newline="", encoding="utf-8"
-            ) as csvfile:
-                reader = csv.DictReader(csvfile)
-                total_operations = sum(
-                    1 for row in reader
-                )  # Count the number of rows (steps)
+        return JsonResponse({
+            "total_operations": total_operations,
+            "operation_time": operation_time,
+        })
 
-        # Return the new log information with total_operations from template and content from MasterLogInfo
-        return JsonResponse(
-            {
-                "total_operations": total_operations,
-                "operation_time": content_info,  # Show the content from MasterLogInfo as the operation_time
-            }
-        )
-    except MasterLog.DoesNotExist:
+    except MasterLogInfo.DoesNotExist:
         return JsonResponse({"error": "Log not found"}, status=404)
+
