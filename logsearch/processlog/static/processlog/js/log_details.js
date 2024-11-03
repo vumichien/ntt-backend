@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log("Content passed to log details:", content);
 
     // Đặt trực tiếp `operationTime` bằng `content`
-    document.getElementById('operationTime').textContent = content;
+    document.getElementById('procedureContent').textContent = content;
 
     // Lấy câu trả lời từ localStorage
     const answers = JSON.parse(localStorage.getItem('procedureAnswers') || '{}');

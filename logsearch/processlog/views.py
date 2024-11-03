@@ -466,11 +466,11 @@ def get_log_info(request, content):
                     total_operations += sum(1 for row in reader)
 
         # Chỉ lấy `content` từ bản ghi đầu tiên
-        operation_time = master_log_infos.first().content
+        procedure_content = master_log_infos.first().content
 
         return JsonResponse({
             "total_operations": total_operations,
-            "operation_time": operation_time,
+            "procedure_content": procedure_content,
         })
 
     except MasterLogInfo.DoesNotExist:
