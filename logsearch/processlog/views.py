@@ -162,13 +162,18 @@ def generate_procedure(request, log_id):
             with open(master_log.info.template_file.path, newline="", encoding="utf-8") as csvfile:
                 reader = csv.DictReader(csvfile)
                 for row in reader:
+                    input_id = row.get("input_id")
                     description = row["description"]
-                    input_id = row.get("input_id")  # Kiểm tra input_id
 
-                    # Thay thế các placeholder với câu trả lời từ answers
-                    if input_id in answers:
-                        description = description.replace(f"{{{input_id}}}", answers[input_id])
+                    # Nếu input_id có trong answers, thay thế placeholder; nếu không, chỉ thêm bước vào mà không cần thay thế
+                    if input_id:
+                        if input_id in answers:
+                            description = description.replace(f"{{{input_id}}}", answers[input_id])
+                        else:
+                            # Bỏ qua bước này nếu input_id có nhưng không nằm trong answers
+                            continue
 
+                    # Thêm bước vào flow
                     steps.append({
                         "step_id": row["step_id"],
                         "description": description,
@@ -178,6 +183,7 @@ def generate_procedure(request, log_id):
         return Response(steps)
     except MasterLog.DoesNotExist:
         return Response({"error": "Log not found"}, status=404)
+
 
 
 

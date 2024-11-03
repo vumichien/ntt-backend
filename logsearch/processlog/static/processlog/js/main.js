@@ -15,7 +15,7 @@ document.addEventListener("DOMContentLoaded", function () {
     e.preventDefault();
     const searchQuery = document.getElementById("searchInput").value;
 
-    resetDisplay(); // Reset khi tìm kiếm mới
+    resetDisplay(); // Reset toàn bộ khi nhấn 検索
 
     fetch("/process-log/search-logs/", {
       method: "POST",
@@ -34,7 +34,7 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   function resetDisplay() {
-    // Đặt lại tất cả các giao diện và giá trị khi tìm kiếm mới
+    // Đặt lại tất cả các giao diện và giá trị khi tìm kiếm mới hoặc nhấn 検索
     const old案件Form = document.getElementById("案件Form");
     const oldQuestionForm = document.getElementById("questionForm");
     if (old案件Form) old案件Form.innerHTML = "";
@@ -42,6 +42,19 @@ document.addEventListener("DOMContentLoaded", function () {
     document.getElementById("案件Card").style.display = "none";
     document.getElementById("questionCard").style.display = "none";
     commonSelectButton.style.display = "none";
+    templateDisplay.style.display = "none";
+    templateDisplay.innerHTML = "";
+    searchResults.innerHTML = "";
+    questions = [];
+    currentQuestionIndex = 0;
+    answers = {};
+  }
+
+  function resetQuestionTemplate() {
+    // Chỉ reset câu hỏi, template và các câu trả lời đã nhập
+    const oldQuestionForm = document.getElementById("questionForm");
+    if (oldQuestionForm) oldQuestionForm.innerHTML = "";
+    document.getElementById("questionCard").style.display = "none";
     templateDisplay.style.display = "none";
     templateDisplay.innerHTML = "";
     questions = [];
@@ -103,6 +116,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   commonSelectButton.addEventListener("click", function () {
     if (selectedLogIds.length > 0) {
+      resetQuestionTemplate(); // Reset câu hỏi và template khi nhấn "選択"
       const content = document.querySelector(`[data-log-id="${selectedLogIds[0]}"]`).getAttribute("data-content");
       fetchQuestionsAndTemplate(content);
       templateDisplay.style.display = "block";
@@ -140,11 +154,9 @@ document.addEventListener("DOMContentLoaded", function () {
       if (event.key === "Enter") handleNextQuestion();
     });
 
-    // Xóa nút "Next" cũ trước khi thêm nút mới
     const existingNextButton = document.getElementById("nextButton");
     if (existingNextButton) existingNextButton.remove();
 
-    // Thêm nút "Next" cho câu hỏi hiện tại
     if (index < questions.length - 1) {
       addNextButton();
     } else {
@@ -168,17 +180,19 @@ document.addEventListener("DOMContentLoaded", function () {
     generateButton.id = "generateButton";
     generateButton.className = "btn btn-primary mt-3";
     generateButton.textContent = "作業手順生成";
-    generateButton.addEventListener("click", generateProcedure);
+    generateButton.addEventListener("click", function () {
+      saveCurrentAnswer();
+      generateProcedure();
+    });
     document.getElementById("questionForm").appendChild(generateButton);
   }
 
   function handleNextQuestion() {
+    saveCurrentAnswer();
+
     const answer = document.getElementById(`question_${questions[currentQuestionIndex].question_id}`).value;
     const containsLetterAndNumber = /[a-zA-Z]/.test(answer) && /\d/.test(answer);
 
-    answers[questions[currentQuestionIndex].question_id] = answer; // Lưu câu trả lời
-
-    // Nếu câu trả lời có cả chữ và số và không phải câu hỏi cuối cùng hoặc gần cuối, nhảy qua hai câu
     if (containsLetterAndNumber && currentQuestionIndex + 2 < questions.length) {
       currentQuestionIndex += 2;
     } else {
@@ -224,6 +238,14 @@ document.addEventListener("DOMContentLoaded", function () {
       `;
       templateDisplay.appendChild(stepContainer);
     });
+  }
+
+  function saveCurrentAnswer() {
+    const currentQuestion = questions[currentQuestionIndex];
+    const inputElement = document.getElementById(`question_${currentQuestion.question_id}`);
+    if (inputElement) {
+      answers[currentQuestion.question_id] = inputElement.value;
+    }
   }
 
   function generateProcedure() {
