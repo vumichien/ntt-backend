@@ -19,9 +19,13 @@ class MasterLogInfo(models.Model):
     )
 
     # New fields for マニュアル情報
-    document_name = models.CharField(max_length=255, null=True, blank=True)  # Tên tài liệu
+    document_name = models.CharField(
+        max_length=255, null=True, blank=True
+    )  # Tên tài liệu
     page_number = models.CharField(max_length=50, null=True, blank=True)  # Số trang
-    document_content = models.TextField(null=True, blank=True)  # Hình ảnh hoặc văn bản của tài liệu
+    document_content = models.TextField(
+        null=True, blank=True
+    )  # Hình ảnh hoặc văn bản của tài liệu
 
     def __str__(self):
         return f"Info for content: {self.content}"
@@ -29,7 +33,7 @@ class MasterLogInfo(models.Model):
 
 class MasterLog(models.Model):
     info = models.ForeignKey(
-        MasterLogInfo, on_delete=models.CASCADE, related_name="logs",null=True
+        MasterLogInfo, on_delete=models.CASCADE, related_name="logs", null=True
     )
     filename = models.CharField(max_length=100)
     business = models.CharField(max_length=50, null=True, blank=True)
@@ -44,6 +48,7 @@ class MasterLog(models.Model):
 
     def __str__(self):
         return f"{self.filename} - {self.total_operations} operations"
+
 
 class LogEntry(models.Model):
     master_log = models.ForeignKey(

@@ -25,15 +25,16 @@ def index(
 def log_details_view(request, content):
     return render(request, "processlog/process_log_details.html", {"content": content})
 
+
 @api_view(["POST"])
 def search_logs(request):
     search_query = request.data.get("search_query", "")
 
     # Thực hiện tìm kiếm trong các trường content, procedure_features và data_features của MasterLogInfo
     matching_info = MasterLogInfo.objects.filter(
-        Q(content__icontains=search_query) |
-        Q(procedure_features__icontains=search_query) |
-        Q(data_features__icontains=search_query)
+        Q(content__icontains=search_query)
+        | Q(procedure_features__icontains=search_query)
+        | Q(data_features__icontains=search_query)
     ).distinct()
 
     # Lấy các MasterLog liên kết với các MasterLogInfo phù hợp
@@ -71,7 +72,6 @@ def search_logs(request):
             )
 
     return Response(results)
-
 
 
 @api_view(["POST"])
@@ -136,14 +136,13 @@ def get_questions_by_content(request, content):
                             "step_id": row["step_id"],
                             "description": row["description"],
                             "capimg": row["capimg"],
-                            "input_id": row.get("input_id"),  # input_id để liên kết với câu hỏi
+                            "input_id": row.get(
+                                "input_id"
+                            ),  # input_id để liên kết với câu hỏi
                         }
                     )
 
-        return Response({
-            "questions": questions,
-            "templateSteps": template_steps
-        })
+        return Response({"questions": questions, "templateSteps": template_steps})
     except MasterLogInfo.DoesNotExist:
         return Response({"error": "Content not found"}, status=404)
 
@@ -162,7 +161,9 @@ def generate_procedure(request, content):
 
         # Đọc từ template_file của bản ghi đầu tiên
         if master_log_info.template_file:
-            with open(master_log_info.template_file.path, newline="", encoding="utf-8") as csvfile:
+            with open(
+                master_log_info.template_file.path, newline="", encoding="utf-8"
+            ) as csvfile:
                 reader = csv.DictReader(csvfile)
                 for row in reader:
                     input_id = row.get("input_id")
@@ -171,16 +172,20 @@ def generate_procedure(request, content):
                     # Nếu input_id có trong answers, thay thế placeholder
                     if input_id:
                         if input_id in answers:
-                            description = description.replace(f"{{{input_id}}}", answers[input_id])
+                            description = description.replace(
+                                f"{{{input_id}}}", answers[input_id]
+                            )
                         else:
                             # Bỏ qua bước này nếu input_id không nằm trong answers
                             continue
 
-                    steps.append({
-                        "step_id": row["step_id"],
-                        "description": description,
-                        "capimg": row["capimg"],
-                    })
+                    steps.append(
+                        {
+                            "step_id": row["step_id"],
+                            "description": description,
+                            "capimg": row["capimg"],
+                        }
+                    )
 
         return Response(steps)
     except Exception as e:
@@ -245,11 +250,19 @@ def import_process_log(request):
             document_content = row["document_content"]
 
             # Tìm file question và template dựa trên content
-            question_file = os.path.join(log_folder, "questions", f"{content}_question.csv")
-            template_file = os.path.join(log_folder, "templates", f"{content}_template.csv")
+            question_file = os.path.join(
+                log_folder, "questions", f"{content}_question.csv"
+            )
+            template_file = os.path.join(
+                log_folder, "templates", f"{content}_template.csv"
+            )
 
-            question_file_path = question_file if os.path.exists(question_file) else None
-            template_file_path = template_file if os.path.exists(template_file) else None
+            question_file_path = (
+                question_file if os.path.exists(question_file) else None
+            )
+            template_file_path = (
+                template_file if os.path.exists(template_file) else None
+            )
 
             # Tạo một bản ghi mới trong MasterLogInfo và lưu lại info_id và filename
             master_log_info = MasterLogInfo.objects.create(
@@ -330,14 +343,15 @@ def import_process_log(request):
                 "total_operations": total_operations,
                 "note": note,
                 "history_file": history_file_path,
-            }
+            },
         )
 
         # Clear existing LogEntries for this master_log
         LogEntry.objects.filter(master_log=master_log).delete()
 
         valid_fields = [
-            f.name for f in LogEntry._meta.get_fields()
+            f.name
+            for f in LogEntry._meta.get_fields()
             if f.name != "id" and f.name != "master_log"
         ]
 
@@ -353,7 +367,13 @@ def import_process_log(request):
 
             # Convert numeric fields to float
             numeric_fields = [
-                "win_hwnd", "app_pid", "ope_boxw", "ope_boxh", "ope_boxt", "ope_boxl", "period",
+                "win_hwnd",
+                "app_pid",
+                "ope_boxw",
+                "ope_boxh",
+                "ope_boxt",
+                "ope_boxl",
+                "period",
             ]
             for field in numeric_fields:
                 if field in entry_data and entry_data[field]:
@@ -364,7 +384,9 @@ def import_process_log(request):
 
             if "captureChangeFlg" in entry_data:
                 entry_data["captureChangeFlg"] = (
-                    entry_data["captureChangeFlg"] == "True" if entry_data["captureChangeFlg"] else None
+                    entry_data["captureChangeFlg"] == "True"
+                    if entry_data["captureChangeFlg"]
+                    else None
                 )
 
             LogEntry.objects.create(master_log=master_log, **entry_data)
@@ -467,20 +489,25 @@ def get_log_info(request, content):
         # Duyệt qua từng bản ghi MasterLogInfo để đếm số bước từ template_file của từng bản ghi
         for master_log_info in master_log_infos:
             if master_log_info.template_file:
-                with open(master_log_info.template_file.path, newline="", encoding="utf-8") as csvfile:
+                with open(
+                    master_log_info.template_file.path, newline="", encoding="utf-8"
+                ) as csvfile:
                     reader = csv.DictReader(csvfile)
                     total_operations += sum(1 for row in reader)
 
         # Chỉ lấy `content` từ bản ghi đầu tiên
         procedure_content = master_log_infos.first().content
 
-        return JsonResponse({
-            "total_operations": total_operations,
-            "procedure_content": procedure_content,
-        })
+        return JsonResponse(
+            {
+                "total_operations": total_operations,
+                "procedure_content": procedure_content,
+            }
+        )
 
     except MasterLogInfo.DoesNotExist:
         return JsonResponse({"error": "Log not found"}, status=404)
+
 
 @api_view(["POST"])
 def get_history_inputs(request):
@@ -500,7 +527,9 @@ def get_history_inputs(request):
                         reader = csv.DictReader(file)
                         file_inputs = {"filename": master_log.filename, "inputs": []}
 
-                        fields_before_button = []  # Danh sách các `field_name` trước khi gặp nút nhấn
+                        fields_before_button = (
+                            []
+                        )  # Danh sách các `field_name` trước khi gặp nút nhấn
                         # Đọc từng dòng trong file và trích xuất input dựa trên `input_id`
                         for row in reader:
                             input_id = row.get("input_id")
@@ -511,22 +540,32 @@ def get_history_inputs(request):
                             if button_match:
                                 # Nếu tìm thấy, thêm các `field_name` từ các bước trước đó vào file_inputs
                                 button_label = button_match.group(1)
-                                file_inputs["inputs"].append({
-                                    "check_label": f"{button_label}前のチェック項目",
-                                    "fields": fields_before_button.copy()  # Sao chép các trường trước nút nhấn
-                                })
+                                file_inputs["inputs"].append(
+                                    {
+                                        "check_label": f"{button_label}前のチェック項目",
+                                        "fields": fields_before_button.copy(),  # Sao chép các trường trước nút nhấn
+                                    }
+                                )
                                 # Reset lại fields_before_button sau khi thêm
                                 fields_before_button.clear()
                             else:
                                 # Nếu không phải nút nhấn, kiểm tra và thêm các giá trị input vào `fields_before_button`
-                                match = re.search(r"「(.*?)」へ「(.*?)」を入力する", description)
+                                match = re.search(
+                                    r"「(.*?)」へ「(.*?)」を入力する", description
+                                )
                                 if match:
-                                    field_name = match.group(1)  # Tên trường, ví dụ: レポートID
-                                    input_value = match.group(2)  # Giá trị input, ví dụ: MDL-700
-                                    file_inputs["inputs"].append({
-                                        "field_name": field_name,
-                                        "input_value": input_value,
-                                    })
+                                    field_name = match.group(
+                                        1
+                                    )  # Tên trường, ví dụ: レポートID
+                                    input_value = match.group(
+                                        2
+                                    )  # Giá trị input, ví dụ: MDL-700
+                                    file_inputs["inputs"].append(
+                                        {
+                                            "field_name": field_name,
+                                            "input_value": input_value,
+                                        }
+                                    )
                                     # Thêm `field_name` vào danh sách trước khi nhấn nút
                                     fields_before_button.append(field_name)
 
@@ -538,6 +577,7 @@ def get_history_inputs(request):
     # Trả về kết quả dưới dạng JSON
     return Response(inputs_summary)
 
+
 @api_view(["GET"])
 def get_manual_info(request, content):
     try:
@@ -546,8 +586,12 @@ def get_manual_info(request, content):
             document_content = manual_info.document_content
 
             # Kiểm tra nếu document_content là ảnh dựa trên đuôi file
-            if document_content and document_content.lower().endswith(('.jpg', '.jpeg', '.png', '.gif')):
-                document_content = request.build_absolute_uri(settings.MEDIA_URL + document_content)
+            if document_content and document_content.lower().endswith(
+                (".jpg", ".jpeg", ".png", ".gif")
+            ):
+                document_content = request.build_absolute_uri(
+                    settings.MEDIA_URL + document_content
+                )
 
             data = {
                 "document_name": manual_info.document_name,
@@ -558,6 +602,3 @@ def get_manual_info(request, content):
         return Response({"error": "No manual info found"}, status=404)
     except MasterLogInfo.DoesNotExist:
         return Response({"error": "Content not found"}, status=404)
-
-
-
