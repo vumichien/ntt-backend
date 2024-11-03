@@ -18,4 +18,5 @@ urlpatterns = [
     path("get-questions/<str:content>/", views.get_questions_by_content, name="get_questions_by_content"),
     path("generate-procedure/<str:content>/", views.generate_procedure, name="generate_procedure"),
     path("get-history-inputs/", views.get_history_inputs, name="get_history_inputs"),
+    path('get-manual-info/<str:content>/', views.get_manual_info, name='get_manual_info'),
 ]

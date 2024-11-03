@@ -240,6 +240,9 @@ def import_process_log(request):
             content = row["content"]
             procedure_features = row["procedure_features"]
             data_features = row["data_features"]
+            document_name = row["document_name"]
+            page_number = row["page_number"]
+            document_content = row["document_content"]
 
             # Tìm file question và template dựa trên content
             question_file = os.path.join(log_folder, "questions", f"{content}_question.csv")
@@ -255,6 +258,9 @@ def import_process_log(request):
                 data_features=data_features,
                 question_file=question_file_path,
                 template_file=template_file_path,
+                document_name=document_name,
+                page_number=page_number,
+                document_content=document_content,
             )
 
             # Lưu lại info_id của MasterLogInfo mới tạo cho filename này
@@ -494,20 +500,35 @@ def get_history_inputs(request):
                         reader = csv.DictReader(file)
                         file_inputs = {"filename": master_log.filename, "inputs": []}
 
+                        fields_before_button = []  # Danh sách các `field_name` trước khi gặp nút nhấn
                         # Đọc từng dòng trong file và trích xuất input dựa trên `input_id`
                         for row in reader:
                             input_id = row.get("input_id")
                             description = row.get("description")
 
-                            # Sử dụng regex để trích xuất giá trị input từ description
-                            match = re.search(r"「(.*?)」へ「(.*?)」を入力する", description)
-                            if match:
-                                field_name = match.group(1)  # Tên trường, ví dụ: レポートID
-                                input_value = match.group(2)  # Giá trị input, ví dụ: MDL-700
+                            # Kiểm tra nếu có pattern "XXを押下する" trong description
+                            button_match = re.search(r"(.+?)を押下する", description)
+                            if button_match:
+                                # Nếu tìm thấy, thêm các `field_name` từ các bước trước đó vào file_inputs
+                                button_label = button_match.group(1)
                                 file_inputs["inputs"].append({
-                                    "field_name": field_name,
-                                    "input_value": input_value,
+                                    "check_label": f"{button_label}前のチェック項目",
+                                    "fields": fields_before_button.copy()  # Sao chép các trường trước nút nhấn
                                 })
+                                # Reset lại fields_before_button sau khi thêm
+                                fields_before_button.clear()
+                            else:
+                                # Nếu không phải nút nhấn, kiểm tra và thêm các giá trị input vào `fields_before_button`
+                                match = re.search(r"「(.*?)」へ「(.*?)」を入力する", description)
+                                if match:
+                                    field_name = match.group(1)  # Tên trường, ví dụ: レポートID
+                                    input_value = match.group(2)  # Giá trị input, ví dụ: MDL-700
+                                    file_inputs["inputs"].append({
+                                        "field_name": field_name,
+                                        "input_value": input_value,
+                                    })
+                                    # Thêm `field_name` vào danh sách trước khi nhấn nút
+                                    fields_before_button.append(field_name)
 
                         inputs_summary.append(file_inputs)
 
@@ -516,4 +537,27 @@ def get_history_inputs(request):
 
     # Trả về kết quả dưới dạng JSON
     return Response(inputs_summary)
+
+@api_view(["GET"])
+def get_manual_info(request, content):
+    try:
+        manual_info = MasterLogInfo.objects.filter(content=content).first()
+        if manual_info:
+            document_content = manual_info.document_content
+
+            # Kiểm tra nếu document_content là ảnh dựa trên đuôi file
+            if document_content and document_content.lower().endswith(('.jpg', '.jpeg', '.png', '.gif')):
+                document_content = request.build_absolute_uri(settings.MEDIA_URL + document_content)
+
+            data = {
+                "document_name": manual_info.document_name,
+                "page_number": manual_info.page_number,
+                "document_content": document_content,
+            }
+            return Response(data)
+        return Response({"error": "No manual info found"}, status=404)
+    except MasterLogInfo.DoesNotExist:
+        return Response({"error": "Content not found"}, status=404)
+
+
 

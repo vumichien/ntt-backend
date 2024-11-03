@@ -497,6 +497,15 @@
 .content-container {
     display: flex;
     gap: 20px; /* Space between timeline and history-container */
+    width: 100%; /* Chiếm trọn chiều rộng của bố cục */
+}
+
+.timeline {
+    flex: 2; /* Chiếm nhiều không gian hơn cho phần timeline */
+    background-color: #f9f9f9;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 /* Styling for the history container on the right */
@@ -506,14 +515,14 @@
     padding: 15px;
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    max-width: 300px;
 }
 
+/* Styling for 過去ログにおける入力値 */
 .history-title {
     font-size: 16px;
     font-weight: bold;
     color: #555;
-    margin-bottom: 15px;
+    margin-bottom: 10px;
     border-bottom: 1px solid #ddd;
     padding-bottom: 8px;
 }
@@ -531,4 +540,35 @@
 .history-entry span {
     font-weight: bold;
     color: #333;
+}
+
+.history-container .check-label {
+    margin-top: 10px;
+    color: #555;
+}
+
+.history-container .indented {
+    display: inline-block;
+    margin-left: 20px; /* Điều chỉnh để lùi thụt vào */
+    color: #444;
+}
+
+/* Styling for マニュアル情報 */
+.manual-info {
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #ddd;
+}
+
+.manual-title {
+    font-size: 16px;
+    font-weight: bold;
+    color: #555;
+    margin-bottom: 10px;
+}
+
+.manual-content p {
+    font-size: 14px;
+    color: #444;
+    margin: 5px 0;
 }

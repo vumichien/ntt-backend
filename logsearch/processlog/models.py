@@ -18,6 +18,11 @@ class MasterLogInfo(models.Model):
         upload_to="data/process_logs/templates/", max_length=255, null=True, blank=True
     )
 
+    # New fields for マニュアル情報
+    document_name = models.CharField(max_length=255, null=True, blank=True)  # Tên tài liệu
+    page_number = models.CharField(max_length=50, null=True, blank=True)  # Số trang
+    document_content = models.TextField(null=True, blank=True)  # Hình ảnh hoặc văn bản của tài liệu
+
     def __str__(self):
         return f"Info for content: {self.content}"
 

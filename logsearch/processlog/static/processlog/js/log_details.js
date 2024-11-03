@@ -15,6 +15,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (content && answers) {
         generateProcedure(content, answers);
+        fetchManualInfo(content);
         fetchHistoryInputs(selectedMasterLogIds);
     }
 
@@ -40,6 +41,27 @@ document.addEventListener('DOMContentLoaded', function() {
         .catch(error => console.error('Error:', error));
     }
 
+    function fetchManualInfo(content) {
+        fetch(`/process-log/get-manual-info/${content}/`)
+            .then(response => response.json())
+            .then(data => displayManualInfo(data))
+            .catch(error => console.error('Error:', error));
+    }
+
+   function displayManualInfo(data) {
+        document.getElementById("documentName").textContent = data.document_name || "N/A";
+        document.getElementById("pageNumber").textContent = data.page_number || "N/A";
+        const documentContentElement = document.getElementById("documentContent");
+
+        if (data.document_content && (data.document_content.endsWith('.jpg') || data.document_content.endsWith('.jpeg') || data.document_content.endsWith('.png') || data.document_content.endsWith('.gif'))) {
+            // Nếu là đường dẫn hình ảnh, thêm thẻ ảnh
+            documentContentElement.innerHTML = `<img src="${data.document_content}" alt="Document Image" style="max-width: 100%;">`;
+        } else {
+            // Nếu là văn bản, hiển thị dưới dạng văn bản
+            documentContentElement.textContent = data.document_content;
+        }
+    }
+
     // Gọi API để lấy giá trị input từ history files
     function fetchHistoryInputs(selectedMasterLogIds) {
         fetch(`/process-log/get-history-inputs/`, {
@@ -57,7 +79,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function displayHistoryInputs(historyData) {
         const historyContent = document.getElementById("history-content");
-        historyContent.innerHTML = ''; // Clear existing content
+        historyContent.innerHTML = ''; // Xóa nội dung cũ
 
         historyData.forEach(fileData => {
             const fileTitle = document.createElement("div");
@@ -65,16 +87,35 @@ document.addEventListener('DOMContentLoaded', function() {
             fileTitle.innerHTML = `<span>${fileData.filename}</span>`;
 
             const inputsList = document.createElement("ul");
+            let fieldsBeforeButton = [];
+
             fileData.inputs.forEach(input => {
-                const inputItem = document.createElement("li");
-                inputItem.innerHTML = `「${input.field_name}」における入力値：「${input.input_value}」`;
-                inputsList.appendChild(inputItem);
+                if (input.check_label) {
+                    // Nếu có check_label, hiển thị danh sách các field trước button nhấn
+                    const checkLabel = document.createElement("li");
+                    checkLabel.className = "check-label";
+                    // Ghép nối các trường trước button nhấn bằng dấu phẩy và xuống dòng với lùi thụt
+                    const fieldsText = fieldsBeforeButton.join("、");
+                    checkLabel.innerHTML = `<strong>${input.check_label}：</strong><br><span class="indented">${fieldsText}</span>`;
+                    inputsList.appendChild(checkLabel);
+
+                    // Reset fieldsBeforeButton để chuẩn bị cho các step tiếp theo
+                    fieldsBeforeButton = [];
+                } else {
+                    // Nếu là input bình thường, thêm vào danh sách input và fieldsBeforeButton
+                    const inputItem = document.createElement("li");
+                    inputItem.innerHTML = `「${input.field_name}」における入力値：「${input.input_value}」`;
+                    inputsList.appendChild(inputItem);
+
+                    fieldsBeforeButton.push(`「${input.field_name}」`);
+                }
             });
 
             historyContent.appendChild(fileTitle);
             historyContent.appendChild(inputsList);
         });
     }
+
 
     // Hiển thị các bước trong timeline
     function displayProcedure(steps) {
