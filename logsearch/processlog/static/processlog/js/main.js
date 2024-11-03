@@ -117,6 +117,8 @@ document.addEventListener("DOMContentLoaded", function () {
   commonSelectButton.addEventListener("click", function () {
     if (selectedLogIds.length > 0) {
       resetQuestionTemplate(); // Reset câu hỏi và template khi nhấn "選択"
+      // Lưu `master_log_ids` đã chọn vào `localStorage`
+      localStorage.setItem("selectedMasterLogIds", JSON.stringify(selectedLogIds));
       const content = document.querySelector(`[data-log-id="${selectedLogIds[0]}"]`).getAttribute("data-content");
       fetchQuestionsAndTemplate(content);
       templateDisplay.style.display = "block";

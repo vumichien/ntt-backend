@@ -476,3 +476,44 @@ def get_log_info(request, content):
     except MasterLogInfo.DoesNotExist:
         return JsonResponse({"error": "Log not found"}, status=404)
 
+@api_view(["POST"])
+def get_history_inputs(request):
+    # Lấy danh sách các `master_log_id` từ request
+    selected_master_log_ids = request.data.get("selected_master_log_ids", [])
+    inputs_summary = []
+
+    # Duyệt qua từng `master_log_id` và lấy dữ liệu từ `history_file`
+    for log_id in selected_master_log_ids:
+        try:
+            master_log = MasterLog.objects.get(id=log_id)
+            if master_log.history_file and master_log.history_file.path:
+                history_file_path = master_log.history_file.path
+
+                if os.path.exists(history_file_path):
+                    with open(history_file_path, "r", encoding="utf-8") as file:
+                        reader = csv.DictReader(file)
+                        file_inputs = {"filename": master_log.filename, "inputs": []}
+
+                        # Đọc từng dòng trong file và trích xuất input dựa trên `input_id`
+                        for row in reader:
+                            input_id = row.get("input_id")
+                            description = row.get("description")
+
+                            # Sử dụng regex để trích xuất giá trị input từ description
+                            match = re.search(r"「(.*?)」へ「(.*?)」を入力する", description)
+                            if match:
+                                field_name = match.group(1)  # Tên trường, ví dụ: レポートID
+                                input_value = match.group(2)  # Giá trị input, ví dụ: MDL-700
+                                file_inputs["inputs"].append({
+                                    "field_name": field_name,
+                                    "input_value": input_value,
+                                })
+
+                        inputs_summary.append(file_inputs)
+
+        except MasterLog.DoesNotExist:
+            continue
+
+    # Trả về kết quả dưới dạng JSON
+    return Response(inputs_summary)
+

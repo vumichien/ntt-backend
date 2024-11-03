@@ -493,3 +493,42 @@
   margin-top: 10px;
   text-align: center;
 }
+
+.content-container {
+    display: flex;
+    gap: 20px; /* Space between timeline and history-container */
+}
+
+/* Styling for the history container on the right */
+.history-container {
+    flex: 1;
+    background-color: #ffffff;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    max-width: 300px;
+}
+
+.history-title {
+    font-size: 16px;
+    font-weight: bold;
+    color: #555;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 8px;
+}
+
+.history-content {
+    font-size: 14px;
+    color: #444;
+}
+
+.history-entry {
+    margin-bottom: 10px;
+    line-height: 1.5;
+}
+
+.history-entry span {
+    font-weight: bold;
+    color: #333;
+}
