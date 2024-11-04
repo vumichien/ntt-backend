@@ -168,6 +168,10 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     displayTemplateStep(index);
+    // Nếu là câu hỏi cuối cùng, hiển thị thêm các bước không có `input_id`
+    if (index === questions.length - 1) {
+        displayRemainingTemplateSteps();
+    }
   }
 
   function addNextButton() {
