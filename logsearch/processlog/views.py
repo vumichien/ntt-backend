@@ -551,7 +551,7 @@ def get_history_inputs(request):
                             else:
                                 # Nếu không phải nút nhấn, kiểm tra và thêm các giá trị input vào `fields_before_button`
                                 match = re.search(
-                                    r"「(.*?)」へ「(.*?)」を入力する", description
+                                    r"「(.*?)」へ「(.*?)」を(入力|選択)する", description
                                 )
                                 if match:
                                     field_name = match.group(
