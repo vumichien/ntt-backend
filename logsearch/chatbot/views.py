@@ -46,7 +46,9 @@ def get_chat_response(request):
             response = requests.get(get_questions_url)
             if response.status_code == 200:
                 data = response.json()
-                questions = data.get("questions", [])  # Lấy danh sách questions từ phản hồi JSON
+                questions = data.get(
+                    "questions", []
+                )  # Lấy danh sách questions từ phản hồi JSON
 
                 if questions:
                     chatbot_message = f"質問1: {questions[0]['question_text']}"
