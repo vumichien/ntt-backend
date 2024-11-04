@@ -53,7 +53,6 @@
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
   padding: 20px;
-  margin-bottom: 20px;
 }
 
 .card-header {
@@ -124,12 +123,12 @@
 
 /* Results styling */
 .result-card {
-  border: none;
   background-color: #F9FBFD;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   border-radius: 10px;
   display: flex;
   flex-direction: column;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .result-header {
@@ -154,11 +153,17 @@
 .result-card .btn:hover {
   background-color: #B83B45;
 }
+.select-checkbox {
+    transform: scale(1.5); /* Tăng kích thước của checkbox */
+    margin-top: 8px;
+}
 
 .result-card .card-footer {
-  background-color: transparent;
-  border-top: none;
-  padding: 16px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 12px;
+    background-color: #f8f9fa;
 }
 
 .result-card .select-button {
@@ -452,16 +457,37 @@
     width: 100%;
 }
 
+.rowQuestionTemplate {
+    --bs-gutter-x: 1.5rem;
+    --bs-gutter-y: 0;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-top: calc(-1 * var(--bs-gutter-y));
+}
+
+.rowQuestionTemplate > .card {
+    flex: 1; /* Mỗi thẻ chiếm đều không gian, cộng với khoảng cách giữa chúng */
+    max-width: calc(50% - 10px); /* Đảm bảo hai thẻ cộng với khoảng cách chiếm 100% chiều rộng */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    background-color: #ffffff;
+    border-radius: 8px;
+}
+
 /* Adjust layout for Template Display */
 #templateDisplay {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
+  margin-top: 20px;
   padding: 15px;
   background-color: #f9f9f9;
   border-radius: 8px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  padding-left: 10px;
 }
 
 /* Ensure description is below the image */

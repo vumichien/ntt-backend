@@ -78,7 +78,6 @@ document.addEventListener("DOMContentLoaded", function () {
     resultCard.innerHTML = `
       <div class="card result-card h-100">
         <div class="card-header result-header">
-          <input type="checkbox" class="select-checkbox" data-log-id="${result.id}" data-content="${result.content}" style="margin-right: 10px;">
           <div>
             <h5 class="card-title mb-0 d-inline">${result.filename}</h5>
           </div>
@@ -92,6 +91,9 @@ document.addEventListener("DOMContentLoaded", function () {
           <p class="card-text">内容: ${result.content || 'N/A'}</p>
           <p class="card-text">手順の特徴: ${result.procedure_features || 'N/A'}</p>
           <p class="card-text">データ特徴: ${result.data_features || 'N/A'}</p>
+        </div>
+         <div class="card-footer text-center">
+          <input type="checkbox" class="select-checkbox" data-log-id="${result.id}" data-content="${result.content}">
         </div>
       </div>`;
     resultCard.querySelector(".select-checkbox").addEventListener("change", handleCheckbox);
