@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (content && answers) {
         generateProcedure(content, answers);
         fetchManualInfo(content);
-        fetchHistoryInputs(selectedMasterLogIds);
+        fetchHistoryInputs(selectedMasterLogIds, answers);
     }
 
     document.getElementById('backButton').addEventListener('click', function() {
@@ -63,14 +63,17 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Gọi API để lấy giá trị input từ history files
-    function fetchHistoryInputs(selectedMasterLogIds) {
+    function fetchHistoryInputs(selectedMasterLogIds, inputIds) {
         fetch(`/process-log/get-history-inputs/`, {
             method: 'POST',
             headers: {
                 "Content-Type": "application/json",
                 "X-CSRFToken": getCookie("csrftoken"),
             },
-            body: JSON.stringify({ selected_master_log_ids: selectedMasterLogIds })
+            body: JSON.stringify({
+                selected_master_log_ids: selectedMasterLogIds,
+                input_ids: Object.keys(inputIds) // Chỉ gửi các input_id có trong answers
+            })
         })
         .then(response => response.json())
         .then(data => displayHistoryInputs(data))

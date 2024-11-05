@@ -511,8 +511,11 @@ def get_log_info(request, content):
 
 @api_view(["POST"])
 def get_history_inputs(request):
-    # Lấy danh sách các `master_log_id` từ request
+    # Lấy danh sách các `master_log_id` từ request và `input_ids` từ `answers`
     selected_master_log_ids = request.data.get("selected_master_log_ids", [])
+    input_ids = set(
+        request.data.get("input_ids", [])
+    )  # Chỉ lấy input_id có trong answers
     inputs_summary = []
 
     # Duyệt qua từng `master_log_id` và lấy dữ liệu từ `history_file`
@@ -526,11 +529,10 @@ def get_history_inputs(request):
                     with open(history_file_path, "r", encoding="utf-8") as file:
                         reader = csv.DictReader(file)
                         file_inputs = {"filename": master_log.filename, "inputs": []}
-
                         fields_before_button = (
                             []
                         )  # Danh sách các `field_name` trước khi gặp nút nhấn
-                        # Đọc từng dòng trong file và trích xuất input dựa trên `input_id`
+
                         for row in reader:
                             input_id = row.get("input_id")
                             description = row.get("description")
@@ -538,37 +540,41 @@ def get_history_inputs(request):
                             # Kiểm tra nếu có pattern "XXを押下する" trong description
                             button_match = re.search(r"(.+?)を押下する", description)
                             if button_match:
-                                # Nếu tìm thấy, thêm các `field_name` từ các bước trước đó vào file_inputs
                                 button_label = button_match.group(1)
+
+                                # Thêm {button_label}前のチェック項目 với các trường có `input_id` trong `input_ids`
                                 file_inputs["inputs"].append(
                                     {
                                         "check_label": f"{button_label}前のチェック項目",
-                                        "fields": fields_before_button.copy(),  # Sao chép các trường trước nút nhấn
+                                        "fields": [
+                                            field
+                                            for field in fields_before_button
+                                            if field
+                                            in input_ids  # Lọc lại chỉ các trường trong input_ids
+                                        ],
                                     }
                                 )
-                                # Reset lại fields_before_button sau khi thêm
-                                fields_before_button.clear()
+                                fields_before_button.clear()  # Xóa các trường sau khi thêm
                             else:
                                 # Nếu không phải nút nhấn, kiểm tra và thêm các giá trị input vào `fields_before_button`
                                 match = re.search(
                                     r"「(.*?)」へ「(.*?)」を(入力|選択)する",
                                     description,
                                 )
-                                if match:
-                                    field_name = match.group(
-                                        1
-                                    )  # Tên trường, ví dụ: レポートID
-                                    input_value = match.group(
-                                        2
-                                    )  # Giá trị input, ví dụ: MDL-700
+                                if match and input_id in input_ids:
+                                    field_name = match.group(1)  # Tên trường
+                                    input_value = match.group(2)  # Giá trị input
+
+                                    # Thêm thông tin input vào `file_inputs` và `fields_before_button`
                                     file_inputs["inputs"].append(
                                         {
                                             "field_name": field_name,
                                             "input_value": input_value,
                                         }
                                     )
-                                    # Thêm `field_name` vào danh sách trước khi nhấn nút
-                                    fields_before_button.append(field_name)
+                                    fields_before_button.append(
+                                        input_id
+                                    )  # Thêm input_id vào danh sách theo dõi
 
                         inputs_summary.append(file_inputs)
 
