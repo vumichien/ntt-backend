@@ -33,21 +33,22 @@ def get_chat_response(request):
         request.session["expecting_keyword"] = False  # Reset trạng thái đợi từ khóa
 
         # Gọi API search_logs_by_content để tìm log dựa trên từ khóa
-        logs = MasterLogInfo.objects.filter(
-            content__icontains=search_query
-        ).select_related("master_log")
-        if logs.exists():
-            log = logs.first().master_log
-            log_id = log.id
-            request.session["selected_log_id"] = log_id  # Lưu log_id vào session
+        logs = MasterLogInfo.objects.filter(content__icontains=search_query)
 
-            # Gọi API get_questions để lấy danh sách câu hỏi
+        if logs.exists():
+            content = logs.first().content
+            request.session["selected_content"] = content  # Lưu content vào session
+
+            # Gọi API get_questions_by_content để lấy danh sách câu hỏi
             get_questions_url = request.build_absolute_uri(
-                reverse("get_questions", args=[log_id])
+                reverse("get_questions_by_content", args=[content])
             )
             response = requests.get(get_questions_url)
             if response.status_code == 200:
-                questions = response.json()
+                data = response.json()
+                questions = data.get(
+                    "questions", []
+                )  # Lấy danh sách questions từ phản hồi JSON
 
                 if questions:
                     chatbot_message = f"質問1: {questions[0]['question_text']}"
@@ -106,10 +107,10 @@ def get_chat_response(request):
     if request.session.get("awaiting_procedure_confirmation", False):
         request.session["awaiting_procedure_confirmation"] = False
         if user_message == "はい":
-            # Call API to generate procedure
-            log_id = request.session.get("selected_log_id")
+            # Gọi API generate_procedure bằng content
+            content = request.session.get("selected_content")
             generate_procedure_url = request.build_absolute_uri(
-                reverse("generate_procedure", args=[log_id])
+                reverse("generate_procedure", args=[content])
             )
             response = requests.post(
                 generate_procedure_url,
@@ -122,7 +123,7 @@ def get_chat_response(request):
 
                     # Fetch log info
                     log_info_url = request.build_absolute_uri(
-                        reverse("get_log_info", args=[log_id])
+                        reverse("get_log_info", args=[content])
                     )
                     log_info_response = requests.get(log_info_url)
                     log_info = (
@@ -136,7 +137,7 @@ def get_chat_response(request):
                     <div class="timeline-header-card">
                         <h3>操作手順概要</h3>
                         <p><strong>操作数:</strong> {log_info.get('total_operations', 'N/A')}</p>
-                        <p><strong>手順の内容:</strong> {log_info.get('operation_time', 'N/A')}</p>
+                        <p><strong>手順の内容:</strong> {log_info.get('procedure_content', 'N/A')}</p>
                     </div>
                     """
 
@@ -199,28 +200,6 @@ def render_procedure_timeline(procedure_steps):
 
     timeline_html += "</div>"
     return timeline_html
-
-
-def generate_procedure(request):
-    log_id = request.session.get("selected_log_id")
-    answers = request.session.get("answers", {})
-    generate_procedure_url = request.build_absolute_uri(
-        reverse("generate_procedure", args=[log_id])
-    )
-    response = requests.post(generate_procedure_url, json={"answers": answers})
-
-    if response.status_code == 200:
-        try:
-            procedure = response.json()
-            timeline_html = render_procedure_timeline(procedure)
-            return JsonResponse(
-                {"message": "処理が生成されました。", "timeline": timeline_html}
-            )
-        except (ValueError, TypeError) as e:
-            print(f"Error in procedure response: {e}")
-            return JsonResponse({"message": "手順を生成できませんでした。"})
-    else:
-        return JsonResponse({"message": "手順を生成できませんでした。"})
 
 
 @csrf_exempt

@@ -9,17 +9,38 @@
             <h5 class="card-title">操作手順概要</h5>
             <div class="summary-item">
                 <span class="summary-label">操作数:</span>
-                <span id="totalOperations" class="summary-value">Loading...</span>
+                <span id="totalSteps" class="summary-value">Loading...</span>
             </div>
             <div class="summary-item">
                 <span class="summary-label">手順の内容:</span>
-                <span id="operationTime" class="summary-value">Loading...</span>
+                <span id="procedureContent" class="summary-value">Loading...</span>
             </div>
         </div>
     </div>
-    <div id="timeline" class="timeline">
-        <!-- Timeline items will be dynamically inserted here -->
+    <div class="content-container">
+        <div id="timeline" class="timeline">
+            <!-- Timeline items will be dynamically inserted here -->
+        </div>
+        <div id="history-container" class="history-container">
+            <!-- Bảng マニュアル情報 nằm trên -->
+            <div id="manual-info" class="manual-info">
+                <h5 class="manual-title">マニュアル情報</h5>
+                <div class="manual-content">
+                    <p><strong>「ドキュメント名」</strong>: <span id="documentName">Loading...</span></p>
+                    <p><strong>「ページ」</strong>: <span id="pageNumber">Loading...</span></p>
+                    <p><strong>「ドキュメントの該当箇所の画像またはテキスト」</strong>:</p>
+                    <div id="documentContent">Loading...</div>
+                </div>
+            </div>
+
+            <!-- Bảng 過去ログにおける入力値 bên dưới -->
+            <h5 class="history-title">過去ログにおける入力値</h5>
+            <div id="history-content" class="history-content">
+                <!-- History inputs will be dynamically inserted here -->
+            </div>
+        </div>
     </div>
+
 </div>
 {% endblock %}
 

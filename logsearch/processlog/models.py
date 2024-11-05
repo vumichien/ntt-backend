@@ -1,27 +1,7 @@
 from django.db import models
 
 
-class MasterLog(models.Model):
-    filename = models.CharField(max_length=100)
-    business = models.CharField(max_length=50, null=True, blank=True)
-    operation_time = models.CharField(max_length=8)  # To store "HH:MM:SS"
-    total_operations = models.IntegerField()
-    note = models.CharField(max_length=100, null=True, blank=True)
-    question_file = models.FileField(
-        upload_to="data/process_logs/questions/", max_length=255, null=True, blank=True
-    )
-    template_file = models.FileField(
-        upload_to="data/process_logs/templates/", max_length=255, null=True, blank=True
-    )
-
-    def __str__(self):
-        return f"{self.filename} - {self.total_operations} operations"
-
-
 class MasterLogInfo(models.Model):
-    master_log = models.OneToOneField(
-        MasterLog, on_delete=models.CASCADE, related_name="info"
-    )
     content = models.CharField(max_length=255, null=True, blank=True)  # 内容
     procedure_features = models.CharField(
         max_length=255, null=True, blank=True
@@ -30,13 +10,49 @@ class MasterLogInfo(models.Model):
         max_length=255, null=True, blank=True
     )  # データ特徴
 
+    # Files associated with content
+    question_file = models.FileField(
+        upload_to="data/process_logs/questions/", max_length=255, null=True, blank=True
+    )
+    template_file = models.FileField(
+        upload_to="data/process_logs/templates/", max_length=255, null=True, blank=True
+    )
+
+    # New fields for マニュアル情報
+    document_name = models.CharField(
+        max_length=255, null=True, blank=True
+    )  # Tên tài liệu
+    page_number = models.CharField(max_length=50, null=True, blank=True)  # Số trang
+    document_content = models.TextField(
+        null=True, blank=True
+    )  # Hình ảnh hoặc văn bản của tài liệu
+
     def __str__(self):
-        return f"Info for {self.master_log.filename}"
+        return f"Info for content: {self.content}"
+
+
+class MasterLog(models.Model):
+    info = models.ForeignKey(
+        MasterLogInfo, on_delete=models.CASCADE, related_name="logs", null=True
+    )
+    filename = models.CharField(max_length=100)
+    business = models.CharField(max_length=50, null=True, blank=True)
+    operation_time = models.CharField(max_length=8)  # To store "HH:MM:SS"
+    total_operations = models.IntegerField()
+    note = models.CharField(max_length=100, null=True, blank=True)
+
+    # One-to-One relationship with history file
+    history_file = models.FileField(
+        upload_to="data/process_logs/history/", max_length=255, null=True, blank=True
+    )
+
+    def __str__(self):
+        return f"{self.filename} - {self.total_operations} operations"
 
 
 class LogEntry(models.Model):
     master_log = models.ForeignKey(
-        MasterLog, on_delete=models.CASCADE, related_name="entries"
+        MasterLog, on_delete=models.CASCADE, related_name="entries", null=True
     )
     time = models.DateTimeField(null=True, blank=True)
     type = models.CharField(max_length=50, null=True, blank=True)
