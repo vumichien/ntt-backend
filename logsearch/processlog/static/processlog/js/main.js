@@ -118,12 +118,45 @@ document.addEventListener("DOMContentLoaded", function () {
 
   commonSelectButton.addEventListener("click", function () {
     if (selectedLogIds.length > 0) {
-      resetQuestionTemplate(); // Reset câu hỏi và template khi nhấn "選択"
-      // Lưu `master_log_ids` đã chọn vào `localStorage`
-      localStorage.setItem("selectedMasterLogIds", JSON.stringify(selectedLogIds));
-      const content = document.querySelector(`[data-log-id="${selectedLogIds[0]}"]`).getAttribute("data-content");
-      fetchQuestionsAndTemplate(content);
-      templateDisplay.style.display = "block";
+        resetQuestionTemplate(); // Reset câu hỏi và template khi nhấn "選択"
+
+        // Tạo container cho nút và thinking
+        const buttonContainer = document.createElement("div");
+        buttonContainer.style.display = "flex";
+        buttonContainer.style.flexDirection = "column";
+        buttonContainer.style.alignItems = "center";
+        buttonContainer.style.gap = "10px";
+
+        // Thêm AI thinking container
+        const thinkingContainer = document.createElement("div");
+        thinkingContainer.id = "aiThinking";
+        thinkingContainer.className = "ai-thinking";
+        thinkingContainer.innerHTML = `
+            <div class="thinking-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <div class="thinking-text">AI分析中...</div>
+        `;
+
+        // Thay thế nút cũ bằng container mới
+        commonSelectButton.parentNode.replaceChild(buttonContainer, commonSelectButton);
+        buttonContainer.appendChild(commonSelectButton);
+        buttonContainer.appendChild(thinkingContainer);
+
+        // Lưu `master_log_ids` đã chọn vào `localStorage`
+        localStorage.setItem("selectedMasterLogIds", JSON.stringify(selectedLogIds));
+        const content = document.querySelector(`[data-log-id="${selectedLogIds[0]}"]`).getAttribute("data-content");
+
+        // Random thinking time between 1-2 seconds
+        const thinkingTime = Math.random() * 1000 + 1000;
+
+        setTimeout(() => {
+            buttonContainer.removeChild(thinkingContainer);
+            fetchQuestionsAndTemplate(content);
+            templateDisplay.style.display = "block";
+        }, thinkingTime);
     }
   });
 
@@ -168,17 +201,13 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     displayTemplateStep(index);
-    // Nếu là câu hỏi cuối cùng, hiển thị thêm các bước không có `input_id`
-    if (index === questions.length - 1) {
-        displayRemainingTemplateSteps();
-    }
   }
 
   function addNextButton() {
     const nextButton = document.createElement("button");
     nextButton.id = "nextButton";
     nextButton.className = "btn btn-primary mt-3";
-    nextButton.textContent = "→";
+    nextButton.textContent = "分析";
     nextButton.addEventListener("click", handleNextQuestion);
     document.getElementById("questionForm").appendChild(nextButton);
   }
@@ -196,22 +225,53 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function handleNextQuestion() {
-    saveCurrentAnswer();
+    const currentInput = document.getElementById(`question_${questions[currentQuestionIndex].question_id}`);
 
-    const answer = document.getElementById(`question_${questions[currentQuestionIndex].question_id}`).value;
+    // Kiểm tra input trống
+    if (!currentInput.value.trim()) {
+        alert('入力は必須です。'); // Thông báo input bắt buộc
+        currentInput.focus();
+        return;
+    }
+
+    saveCurrentAnswer();
+    const nextButton = document.getElementById("nextButton");
+
+    // Tạo AI thinking container
+    const thinkingContainer = document.createElement("div");
+    thinkingContainer.id = "aiThinking";
+    thinkingContainer.className = "ai-thinking";
+    thinkingContainer.innerHTML = `
+        <div class="thinking-dots">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+        <div class="thinking-text">AI分析中...</div>
+    `;
+
+    nextButton.insertAdjacentElement('afterend', thinkingContainer);
+
+    const answer = currentInput.value;
     const containsLetterAndNumber = /[a-zA-Z]/.test(answer) && /\d/.test(answer);
 
-    if (containsLetterAndNumber && currentQuestionIndex + 2 < questions.length) {
-      currentQuestionIndex += 2;
-    } else {
-      currentQuestionIndex += 1;
-    }
+    const thinkingTime = Math.random() * 1000 + 1000;
 
-    if (currentQuestionIndex < questions.length) {
-      displayQuestion(currentQuestionIndex);
-    } else {
-      displayRemainingTemplateSteps();
-    }
+    setTimeout(() => {
+        thinkingContainer.remove();
+
+        if (containsLetterAndNumber && currentQuestionIndex + 2 < questions.length) {
+            currentQuestionIndex += 2;
+        } else {
+            currentQuestionIndex += 1;
+        }
+
+        if (currentQuestionIndex < questions.length) {
+            displayQuestion(currentQuestionIndex);
+        } else {
+            displayRemainingTemplateSteps();
+        }
+    }, thinkingTime);
   }
 
   function displayTemplateStep(index) {
@@ -257,9 +317,54 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function generateProcedure() {
-    localStorage.setItem("procedureAnswers", JSON.stringify(answers));
-    const content = document.querySelector(`[data-log-id="${selectedLogIds[0]}"]`).getAttribute("data-content");
-    window.location.href = `/process-log/log-details-view/${content}`;
+    const generateButton = document.getElementById("generateButton");
+
+    // Kiểm tra input cuối cùng
+    const lastInput = document.getElementById(`question_${questions[currentQuestionIndex].question_id}`);
+    if (!lastInput.value.trim()) {
+        alert('入力は必須です。');
+        lastInput.focus();
+        return;
+    }
+
+    saveCurrentAnswer();
+
+    // Tạo container cho thinking messages
+    const thinkingContainer = document.createElement("div");
+    thinkingContainer.id = "generateThinking";
+    thinkingContainer.className = "ai-thinking";
+    generateButton.insertAdjacentElement('afterend', thinkingContainer);
+
+    // Hàm hiển thị thinking message
+    const showThinkingMessage = (message, delay) => {
+        return new Promise(resolve => {
+            thinkingContainer.innerHTML = `
+                <div class="thinking-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+                <div class="thinking-text">${message}</div>
+            `;
+            setTimeout(resolve, delay);
+        });
+    };
+
+    (async () => {
+        const delay1 = Math.random() * 2000 + 1000;
+        const delay2 = Math.random() * 2000 + 1000;
+
+        await showThinkingMessage("データを集計中...", delay1);
+        await showThinkingMessage("手順生成の準備中...", delay2);
+
+        if (thinkingContainer && thinkingContainer.parentNode) {
+            thinkingContainer.parentNode.removeChild(thinkingContainer);
+        }
+
+        localStorage.setItem("procedureAnswers", JSON.stringify(answers));
+        const content = document.querySelector(`[data-log-id="${selectedLogIds[0]}"]`).getAttribute("data-content");
+        window.location.href = `/process-log/log-details-view/${content}`;
+    })();
   }
 
   function getCookie(name) {

@@ -1,18 +1,21 @@
 document.addEventListener("DOMContentLoaded", function () {
   const searchForm = document.getElementById("searchForm");
   const searchResults = document.getElementById("searchResults");
+  const commonSelectButton = document.getElementById("commonSelectButton");
+  const templateDisplay = document.getElementById("templateDisplay");
+  let selectedLogIds = [];
+  let questions = [];
+  let currentQuestionIndex = 0;
+  let templateSteps = [];
+  let answers = {}; // Lưu trữ câu trả lời cho mỗi câu hỏi
+
+  templateDisplay.style.display = "none"; // Ẩn templateDisplay khi trang vừa tải
 
   searchForm.addEventListener("submit", function (e) {
     e.preventDefault();
     const searchQuery = document.getElementById("searchInput").value;
 
-    // Clear previous forms and results
-    const old案件Form = document.getElementById("案件Form");
-    const oldQuestionForm = document.getElementById("questionForm");
-    if (old案件Form) old案件Form.innerHTML = "";
-    if (oldQuestionForm) oldQuestionForm.innerHTML = "";
-    document.getElementById("案件Card").style.display = "none";
-    document.getElementById("questionCard").style.display = "none";
+    resetDisplay(); // Reset toàn bộ khi nhấn 検索
 
     fetch("/process-log/search-logs/", {
       method: "POST",
@@ -23,142 +26,351 @@ document.addEventListener("DOMContentLoaded", function () {
       body: JSON.stringify({ search_query: searchQuery }),
     })
       .then((response) => response.json())
-      .then((data) => displaySearchResults(data))
+      .then((data) => {
+        displaySearchResults(data);
+        show案件Form(); // Hiện 案件 form sau khi có kết quả tìm kiếm
+      })
       .catch((error) => console.error("Error:", error));
   });
 
-  function displaySearchResults(results) {
-    searchResults.innerHTML = ""; // Clear previous search results
-
-    results.forEach((result) => {
-      const resultCard = document.createElement("div");
-      resultCard.className = "col";
-      resultCard.innerHTML = `
-        <div class="card result-card h-100">
-            <div class="card-header result-header">
-                <h5 class="card-title mb-0">${result.filename}</h5>
-                <small>${result.note}</small>
-            </div>
-            <div class="card-body">
-                <p class="card-text">操作時間: ${result.operation_time}</p>
-                <p class="card-text">総操作数: ${result.total_operations}</p>
-                <p class="card-text">内容: ${result.content || 'N/A'}</p>
-                <p class="card-text">手順の特徴: ${result.procedure_features || 'N/A'}</p>
-                <p class="card-text">データ特徴: ${result.data_features || 'N/A'}</p>
-            </div>
-            <div class="card-footer d-flex justify-content-center">
-                <button class="btn btn-primary select-button w-50" data-log-id="${result.id}">選択</button>
-            </div>
-        </div>
-      `;
-      searchResults.appendChild(resultCard);
-    });
-
-    document.querySelectorAll(".select-button").forEach((button) => {
-      button.addEventListener("click", function () {
-        const logId = this.getAttribute("data-log-id");
-        selectLog(logId);
-      });
-    });
+  function resetDisplay() {
+    // Đặt lại tất cả các giao diện và giá trị khi tìm kiếm mới hoặc nhấn 検索
+    const old案件Form = document.getElementById("案件Form");
+    const oldQuestionForm = document.getElementById("questionForm");
+    if (old案件Form) old案件Form.innerHTML = "";
+    if (oldQuestionForm) oldQuestionForm.innerHTML = "";
+    document.getElementById("案件Card").style.display = "none";
+    document.getElementById("questionCard").style.display = "none";
+    commonSelectButton.style.display = "none";
+    templateDisplay.style.display = "none";
+    templateDisplay.innerHTML = "";
+    searchResults.innerHTML = "";
+    questions = [];
+    currentQuestionIndex = 0;
+    answers = {};
   }
 
-  function selectLog(selectedLogId) {
-    // Clear any existing question forms
-    const questionForm = document.getElementById("questionForm");
-    if (questionForm) questionForm.innerHTML = "";
+  function resetQuestionTemplate() {
+    // Chỉ reset câu hỏi, template và các câu trả lời đã nhập
+    const oldQuestionForm = document.getElementById("questionForm");
+    if (oldQuestionForm) oldQuestionForm.innerHTML = "";
+    document.getElementById("questionCard").style.display = "none";
+    templateDisplay.style.display = "none";
+    templateDisplay.innerHTML = "";
+    questions = [];
+    currentQuestionIndex = 0;
+    answers = {};
+  }
 
-    // Re-enable all logs (remove opacity)
-    document.querySelectorAll(".result-card").forEach((card) => {
-      card.style.opacity = "1"; // Restore opacity for all logs
-    });
+  function displaySearchResults(results) {
+    searchResults.innerHTML = "";
+    selectedLogIds = [];
+    if (results.length > 0) {
+      commonSelectButton.style.display = "block";
+    }
 
-    // Dim all logs except the selected one
-    document.querySelectorAll(".result-card").forEach((card) => {
-      const button = card.querySelector(".select-button");
-      if (button.getAttribute("data-log-id") !== selectedLogId) {
-        card.style.opacity = "0.5"; // Dim the logs that are not selected
-      }
-    });
+    results.forEach((result) => searchResults.appendChild(createResultCard(result)));
+  }
 
-    // Display and populate 案件 form
+  function createResultCard(result) {
+    const resultCard = document.createElement("div");
+    resultCard.className = "col";
+    resultCard.innerHTML = `
+      <div class="card result-card h-100">
+        <div class="card-header result-header">
+          <div>
+            <h5 class="card-title mb-0 d-inline">${result.filename}</h5>
+          </div>
+          <div>
+            <small>${result.note}</small>
+          </div>
+        </div>
+        <div class="card-body">
+          <p class="card-text">操作時間: ${result.operation_time}</p>
+          <p class="card-text">総操作数: ${result.total_operations}</p>
+          <p class="card-text">内容: ${result.content || 'N/A'}</p>
+          <p class="card-text">手順の特徴: ${result.procedure_features || 'N/A'}</p>
+          <p class="card-text">データ特徴: ${result.data_features || 'N/A'}</p>
+        </div>
+         <div class="card-footer text-center">
+          <input type="checkbox" class="select-checkbox" data-log-id="${result.id}" data-content="${result.content}">
+        </div>
+      </div>`;
+    resultCard.querySelector(".select-checkbox").addEventListener("change", handleCheckbox);
+    return resultCard;
+  }
+
+  function handleCheckbox() {
+    const logId = this.getAttribute("data-log-id");
+    if (this.checked) {
+      selectedLogIds.push(logId);
+    } else {
+      selectedLogIds = selectedLogIds.filter(id => id !== logId);
+    }
+  }
+
+  function show案件Form() {
     const 案件Card = document.getElementById("案件Card");
     案件Card.style.display = "block";
     const 案件Form = document.getElementById("案件Form");
-    案件Form.innerHTML = `
-      <input type="text" class="form-control" id="案件内容" placeholder="案件内容">
-      <button id="AnalysisButton" class="btn btn-primary mt-2">分析</button>
-    `;
-
-    document.getElementById("AnalysisButton").addEventListener("click", function () {
-      save案件内容(selectedLogId);  // Pass the selectedLogId to save the new log's 案件
-    });
+    案件Form.innerHTML = `<input type="text" class="form-control" id="案件内容" placeholder="案件内容">`;
   }
 
-  function save案件内容(selectedLogId) {
-    const 案件内容 = document.getElementById("案件内容").value;
+  commonSelectButton.addEventListener("click", function () {
+    if (selectedLogIds.length > 0) {
+        resetQuestionTemplate(); // Reset câu hỏi và template khi nhấn "選択"
 
-    const questionCard = document.getElementById("questionCard");
-    if (questionCard.style.display === "block") {
-      // 問題がすでに表示されている場合は何もしない
-      return;
+        // Tạo container cho nút và thinking
+        const buttonContainer = document.createElement("div");
+        buttonContainer.style.display = "flex";
+        buttonContainer.style.flexDirection = "column";
+        buttonContainer.style.alignItems = "center";
+        buttonContainer.style.gap = "10px";
+
+        // Thêm AI thinking container
+        const thinkingContainer = document.createElement("div");
+        thinkingContainer.id = "aiThinking";
+        thinkingContainer.className = "ai-thinking";
+        thinkingContainer.innerHTML = `
+            <div class="thinking-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <div class="thinking-text">AI分析中...</div>
+        `;
+
+        // Thay thế nút cũ bằng container mới
+        commonSelectButton.parentNode.replaceChild(buttonContainer, commonSelectButton);
+        buttonContainer.appendChild(commonSelectButton);
+        buttonContainer.appendChild(thinkingContainer);
+
+        // Lưu `master_log_ids` đã chọn vào `localStorage`
+        localStorage.setItem("selectedMasterLogIds", JSON.stringify(selectedLogIds));
+        const content = document.querySelector(`[data-log-id="${selectedLogIds[0]}"]`).getAttribute("data-content");
+
+        // Random thinking time between 1-2 seconds
+        const thinkingTime = Math.random() * 1000 + 1000;
+
+        setTimeout(() => {
+            buttonContainer.removeChild(thinkingContainer);
+            fetchQuestionsAndTemplate(content);
+            templateDisplay.style.display = "block";
+        }, thinkingTime);
     }
+  });
 
-    fetch(`/process-log/get-questions/${selectedLogId}/`)
+  function fetchQuestionsAndTemplate(content) {
+    fetch(`/process-log/get-questions/${content}/`)
       .then((response) => response.json())
-      .then((data) => displayQuestions(data, selectedLogId))  // Pass selectedLogId to display the new list of questions
+      .then((data) => {
+        questions = data.questions;
+        templateSteps = data.templateSteps;
+        displayQuestion(0);
+      })
       .catch((error) => console.error("Error:", error));
   }
 
-  function displayQuestions(questions, selectedLogId) {
+  function displayQuestion(index) {
+    currentQuestionIndex = index;
     const questionCard = document.getElementById("questionCard");
-    questionCard.style.display = "block";  // Show the card
+    questionCard.style.display = "block";
+
     const questionForm = document.getElementById("questionForm");
+    const questionContainer = document.createElement("div");
+    questionContainer.classList.add("question-container");
+    questionContainer.innerHTML = `
+      <label for="question_${questions[index].question_id}" class="form-label">${questions[index].question_text}</label>
+      <input type="text" class="form-control" id="question_${questions[index].question_id}" value="${answers[questions[index].question_id] || ''}">
+    `;
 
-    const formRow = document.createElement("div");
-    formRow.className = "row g-3";
+    questionForm.appendChild(questionContainer);
 
-    questions.forEach((question, index) => {
-      const col = document.createElement("div");
-      col.className = "col-md-6";
-      col.innerHTML = `
-        <label for="question_${question.question_id}" class="form-label">${index + 1}. ${question.question_text}</label>
-        <input type="text" class="form-control" id="question_${question.question_id}">
-      `;
-      formRow.appendChild(col);
+    const inputElement = document.getElementById(`question_${questions[index].question_id}`);
+    inputElement.addEventListener("keydown", function (event) {
+      if (event.key === "Enter") handleNextQuestion();
     });
 
-    questionForm.appendChild(formRow);
+    const existingNextButton = document.getElementById("nextButton");
+    if (existingNextButton) existingNextButton.remove();
 
+    if (index < questions.length - 1) {
+      addNextButton();
+    } else {
+      addGenerateButton();
+    }
+
+    displayTemplateStep(index);
+  }
+
+  function addNextButton() {
+    const nextButton = document.createElement("button");
+    nextButton.id = "nextButton";
+    nextButton.className = "btn btn-primary mt-3";
+    nextButton.textContent = "分析";
+    nextButton.addEventListener("click", handleNextQuestion);
+    document.getElementById("questionForm").appendChild(nextButton);
+  }
+
+  function addGenerateButton() {
     const generateButton = document.createElement("button");
     generateButton.id = "generateButton";
     generateButton.className = "btn btn-primary mt-3";
     generateButton.textContent = "作業手順生成";
-    questionForm.appendChild(generateButton);
-
     generateButton.addEventListener("click", function () {
-      generateProcedure(selectedLogId, questions);  // Pass selectedLogId to generate the procedure
+      saveCurrentAnswer();
+      generateProcedure();
+    });
+    document.getElementById("questionForm").appendChild(generateButton);
+  }
+
+  function handleNextQuestion() {
+    const currentInput = document.getElementById(`question_${questions[currentQuestionIndex].question_id}`);
+
+    // Kiểm tra input trống
+    if (!currentInput.value.trim()) {
+        alert('入力は必須です。'); // Thông báo input bắt buộc
+        currentInput.focus();
+        return;
+    }
+
+    saveCurrentAnswer();
+    const nextButton = document.getElementById("nextButton");
+
+    // Tạo AI thinking container
+    const thinkingContainer = document.createElement("div");
+    thinkingContainer.id = "aiThinking";
+    thinkingContainer.className = "ai-thinking";
+    thinkingContainer.innerHTML = `
+        <div class="thinking-dots">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+        <div class="thinking-text">AI分析中...</div>
+    `;
+
+    nextButton.insertAdjacentElement('afterend', thinkingContainer);
+
+    const answer = currentInput.value;
+    const containsLetterAndNumber = /[a-zA-Z]/.test(answer) && /\d/.test(answer);
+
+    const thinkingTime = Math.random() * 1000 + 1000;
+
+    setTimeout(() => {
+        thinkingContainer.remove();
+
+        if (containsLetterAndNumber && currentQuestionIndex + 2 < questions.length) {
+            currentQuestionIndex += 2;
+        } else {
+            currentQuestionIndex += 1;
+        }
+
+        if (currentQuestionIndex < questions.length) {
+            displayQuestion(currentQuestionIndex);
+        } else {
+            displayRemainingTemplateSteps();
+        }
+    }, thinkingTime);
+  }
+
+  function displayTemplateStep(index) {
+    const step = templateSteps.find(step => step.input_id == questions[index].question_id);
+    if (step) {
+      const stepContainer = document.createElement("div");
+      stepContainer.className = "timeline-item";
+      stepContainer.innerHTML = `
+        <div class="image-container">
+          <img src="/media/${step.capimg}" alt="Captured" class="captured-image">
+        </div>
+        <div class="text-content">
+          <p>${step.description.replace(`{${questions[index].question_id}}`, answers[questions[index].question_id] || '')}</p>
+        </div>
+      `;
+      templateDisplay.appendChild(stepContainer);
+    }
+  }
+
+  function displayRemainingTemplateSteps() {
+    const remainingSteps = templateSteps.filter(step => !questions.some(q => q.question_id == step.input_id));
+    remainingSteps.forEach((step) => {
+      const stepContainer = document.createElement("div");
+      stepContainer.className = "timeline-item";
+      stepContainer.innerHTML = `
+        <div class="image-container">
+          <img src="/media/${step.capimg}" alt="Captured" class="captured-image">
+        </div>
+        <div class="text-content">
+          <p>${step.description.replace(/\{(\d+)\}/g, (match, id) => answers[id] || '')}</p>
+        </div>
+      `;
+      templateDisplay.appendChild(stepContainer);
     });
   }
 
-  function generateProcedure(selectedLogId, questions) {
-    const answers = {};
-    questions.forEach((question) => {
-      const answer = document.getElementById(`question_${question.question_id}`).value;
-      answers[question.question_id] = answer;
-    });
+  function saveCurrentAnswer() {
+    const currentQuestion = questions[currentQuestionIndex];
+    const inputElement = document.getElementById(`question_${currentQuestion.question_id}`);
+    if (inputElement) {
+      answers[currentQuestion.question_id] = inputElement.value;
+    }
+  }
 
-    // Save the answers in localStorage for later use
-    localStorage.setItem("procedureAnswers", JSON.stringify(answers));
+  function generateProcedure() {
+    const generateButton = document.getElementById("generateButton");
 
-    // Redirect to log details page
-    window.location.href = `/process-log/log-details-view/${selectedLogId}`;
+    // Kiểm tra input cuối cùng
+    const lastInput = document.getElementById(`question_${questions[currentQuestionIndex].question_id}`);
+    if (!lastInput.value.trim()) {
+        alert('入力は必須です。');
+        lastInput.focus();
+        return;
+    }
+
+    saveCurrentAnswer();
+
+    // Tạo container cho thinking messages
+    const thinkingContainer = document.createElement("div");
+    thinkingContainer.id = "generateThinking";
+    thinkingContainer.className = "ai-thinking";
+    generateButton.insertAdjacentElement('afterend', thinkingContainer);
+
+    // Hàm hiển thị thinking message
+    const showThinkingMessage = (message, delay) => {
+        return new Promise(resolve => {
+            thinkingContainer.innerHTML = `
+                <div class="thinking-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+                <div class="thinking-text">${message}</div>
+            `;
+            setTimeout(resolve, delay);
+        });
+    };
+
+    (async () => {
+        const delay1 = Math.random() * 2000 + 1000;
+        const delay2 = Math.random() * 2000 + 1000;
+
+        await showThinkingMessage("データを集計中...", delay1);
+        await showThinkingMessage("手順生成の準備中...", delay2);
+
+        if (thinkingContainer && thinkingContainer.parentNode) {
+            thinkingContainer.parentNode.removeChild(thinkingContainer);
+        }
+
+        localStorage.setItem("procedureAnswers", JSON.stringify(answers));
+        const content = document.querySelector(`[data-log-id="${selectedLogIds[0]}"]`).getAttribute("data-content");
+        window.location.href = `/process-log/log-details-view/${content}`;
+    })();
   }
 
   function getCookie(name) {
     let cookieValue = null;
     if (document.cookie && document.cookie !== "") {
       const cookies = document.cookie.split(";");
-
       for (let i = 0; i < cookies.length; i++) {
         const cookie = cookies[i].trim();
         if (cookie.substring(0, name.length + 1) === name + "=") {

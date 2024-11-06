@@ -598,3 +598,75 @@
     color: #444;
     margin: 5px 0;
 }
+
+/* AI Thinking Animation */
+.ai-thinking {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 15px;
+    padding: 10px;
+    background: #f0f4f8;
+    border-radius: 8px;
+    animation: fadeIn 0.3s ease-in;
+    width: fit-content; /* Đảm bảo container chỉ rộng bằng nội dung */
+}
+
+.thinking-dots {
+    display: flex;
+    gap: 4px;
+}
+
+.thinking-dots span {
+    width: 8px;
+    height: 8px;
+    background: #2A4A73;
+    border-radius: 50%;
+    animation: bounce 1.4s infinite ease-in-out;
+}
+
+.thinking-dots span:nth-child(1) {
+    animation-delay: -0.32s;
+}
+
+.thinking-dots span:nth-child(2) {
+    animation-delay: -0.16s;
+}
+
+.thinking-text {
+    color: #2A4A73;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+@keyframes bounce {
+    0%, 80%, 100% {
+        transform: scale(0);
+    }
+    40% {
+        transform: scale(1);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Đảm bảo nút không bị dịch chuyển */
+#nextButton, #generateButton {
+    display: block; /* Giữ nút ở vị trí cố định */
+    width: fit-content; /* Chiều rộng vừa với nội dung */
+}
+
+/* #questionForm {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start; /* Căn trái thay vì căn giữa */
+} */
