@@ -34,7 +34,28 @@ document.addEventListener('DOMContentLoaded', function() {
         sendMessage();
     });
 
-    function sendMessage(message = null) {
+    function appendLoadingMessage(message) {
+        const messageContainer = document.createElement('div');
+        messageContainer.className = 'message-container chatbot-message-container';
+
+        const avatar = document.createElement('img');
+        avatar.className = 'avatar';
+        avatar.src = '/static/chatbot/images/chatbot-avatar.png';
+        avatar.alt = 'Chatbot Avatar';
+
+        const loadingDiv = document.createElement('div');
+        loadingDiv.className = 'loading-message';
+        loadingDiv.innerHTML = `${message}<span class="loading-dots"></span>`;
+
+        messageContainer.appendChild(avatar);
+        messageContainer.appendChild(loadingDiv);
+        chatOutput.appendChild(messageContainer);
+        chatOutput.scrollTop = chatOutput.scrollHeight;
+
+        return messageContainer;
+    }
+
+    async function sendMessage(message = null) {
         const messageToSend = message || userInput.value;
         if (messageToSend.trim() !== '') {
             if (!message) {
@@ -45,6 +66,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 userInput.style.height = 'auto';
             }
 
+            // Show initial loading message
+            const loadingContainer = appendLoadingMessage('AI分析中');
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            loadingContainer.remove();
+            
             const csrftoken = getCookie('csrftoken');
 
             fetch('/chatbot/get-response/', {
@@ -56,16 +82,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 body: JSON.stringify({ message: messageToSend })
             })
             .then(response => response.json())
-            .then(data => {
+            .then(async data => {
                 if (data.message) {
                     if (data.expecting_keyword) {
-                        lastKeyword = '';  // Reset lastKeyword when bot asks for a new keyword
+                        lastKeyword = '';
                     } else if (lastKeyword === '' && data.message === "どんな手順を知りたいですか？") {
-                        // Don't save lastKeyword here, wait for user's response
+                        // Don't save lastKeyword
                     } else if (lastKeyword === '') {
-                        lastKeyword = messageToSend;  // Save the keyword
-                        saveChatHistory();  // Save chat history after getting the keyword
+                        lastKeyword = messageToSend;
+                        saveChatHistory();
                     }
+                    
                     if (data.raw_html) {
                         appendChatbotMessage(data.message, true);
                     } else {
@@ -78,10 +105,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else if (data.expecting_keyword) {
                     lastKeyword = '';
                 } else if (lastKeyword === '' && data.message !== "どんな手順を知りたいですか？") {
-                    lastKeyword = messageToSend;  // Save the keyword
+                    lastKeyword = messageToSend;
                 }
 
                 if (data.timeline) {
+                    // Show データを集計中 loading
+                    const loadingData = appendLoadingMessage('データを集計中');
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    loadingData.remove();
+
+                    // Show 手順生成の準備中 loading
+                    const loadingPrep = appendLoadingMessage('手順生成の準備中');
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    loadingPrep.remove();
+
+                    // Display timeline
                     displayTimeline(data.timeline);
                 }
             })
