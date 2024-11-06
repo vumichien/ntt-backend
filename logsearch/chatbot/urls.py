@@ -11,4 +11,5 @@ urlpatterns = [
         views.load_chat_history,
         name="load_chat_history",
     ),
+    path("clear-session/", views.clear_session, name="clear_session"),
 ]
