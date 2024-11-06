@@ -306,8 +306,22 @@ document.addEventListener('DOMContentLoaded', function() {
         // Disable the send button
         sendButton.classList.remove('active');
         sendButton.disabled = true;
-        // Optionally, you can add a welcome message here
-        appendChatbotMessage("こんにちは！どのようなお手伝いができますか？");
+
+        // Add new fetch request to clear session
+        fetch('/chatbot/clear-session/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Optionally, you can add a welcome message here
+                appendChatbotMessage("こんにちは！どのようなお手伝いができますか？");
+            }
+        })
+        .catch(error => console.error('Error clearing session:', error));
     });
 });
 

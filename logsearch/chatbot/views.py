@@ -12,6 +12,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
 import json
 from datetime import datetime, timezone, timedelta
+from django.views.decorators.http import require_http_methods
 
 # Đường dẫn đến file JSON của Google Dialogflow
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.path.join(
@@ -279,3 +280,11 @@ def load_chat_history(request, filename):
             content = f.read()
         return HttpResponse(content)
     return HttpResponse("File not found", status=404)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def clear_session(request):
+    """Clear all session data when starting a new chat"""
+    request.session.clear()
+    return JsonResponse({"success": True})
