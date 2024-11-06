@@ -119,14 +119,14 @@ document.addEventListener("DOMContentLoaded", function () {
   commonSelectButton.addEventListener("click", function () {
     if (selectedLogIds.length > 0) {
         resetQuestionTemplate(); // Reset câu hỏi và template khi nhấn "選択"
-        
+
         // Tạo container cho nút và thinking
         const buttonContainer = document.createElement("div");
         buttonContainer.style.display = "flex";
         buttonContainer.style.flexDirection = "column";
         buttonContainer.style.alignItems = "center";
         buttonContainer.style.gap = "10px";
-        
+
         // Thêm AI thinking container
         const thinkingContainer = document.createElement("div");
         thinkingContainer.id = "aiThinking";
@@ -139,7 +139,7 @@ document.addEventListener("DOMContentLoaded", function () {
             </div>
             <div class="thinking-text">AI分析中...</div>
         `;
-        
+
         // Thay thế nút cũ bằng container mới
         commonSelectButton.parentNode.replaceChild(buttonContainer, commonSelectButton);
         buttonContainer.appendChild(commonSelectButton);
@@ -148,10 +148,10 @@ document.addEventListener("DOMContentLoaded", function () {
         // Lưu `master_log_ids` đã chọn vào `localStorage`
         localStorage.setItem("selectedMasterLogIds", JSON.stringify(selectedLogIds));
         const content = document.querySelector(`[data-log-id="${selectedLogIds[0]}"]`).getAttribute("data-content");
-        
+
         // Random thinking time between 1-2 seconds
         const thinkingTime = Math.random() * 1000 + 1000;
-        
+
         setTimeout(() => {
             buttonContainer.removeChild(thinkingContainer);
             fetchQuestionsAndTemplate(content);
@@ -226,7 +226,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function handleNextQuestion() {
     const currentInput = document.getElementById(`question_${questions[currentQuestionIndex].question_id}`);
-    
+
     // Kiểm tra input trống
     if (!currentInput.value.trim()) {
         alert('入力は必須です。'); // Thông báo input bắt buộc
@@ -236,7 +236,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     saveCurrentAnswer();
     const nextButton = document.getElementById("nextButton");
-    
+
     // Tạo AI thinking container
     const thinkingContainer = document.createElement("div");
     thinkingContainer.id = "aiThinking";
@@ -249,7 +249,7 @@ document.addEventListener("DOMContentLoaded", function () {
         </div>
         <div class="thinking-text">AI分析中...</div>
     `;
-    
+
     nextButton.insertAdjacentElement('afterend', thinkingContainer);
 
     const answer = currentInput.value;
@@ -259,7 +259,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     setTimeout(() => {
         thinkingContainer.remove();
-        
+
         if (containsLetterAndNumber && currentQuestionIndex + 2 < questions.length) {
             currentQuestionIndex += 2;
         } else {
@@ -318,7 +318,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function generateProcedure() {
     const generateButton = document.getElementById("generateButton");
-    
+
     // Kiểm tra input cuối cùng
     const lastInput = document.getElementById(`question_${questions[currentQuestionIndex].question_id}`);
     if (!lastInput.value.trim()) {
