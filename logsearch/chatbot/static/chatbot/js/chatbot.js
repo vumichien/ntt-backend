@@ -47,49 +47,75 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const csrftoken = getCookie('csrftoken');
 
-            fetch('/chatbot/get-response/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrftoken,
-                },
-                body: JSON.stringify({ message: messageToSend })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.message) {
-                    if (data.expecting_keyword) {
-                        lastKeyword = '';  // Reset lastKeyword when bot asks for a new keyword
-                    } else if (lastKeyword === '' && data.message === "どんな手順を知りたいですか？") {
-                        // Don't save lastKeyword here, wait for user's response
-                    } else if (lastKeyword === '') {
+            // Add "thinking" indicator with animated dots
+            const thinkingIndicator = document.createElement('div');
+            thinkingIndicator.className = 'message-container chatbot-message-container thinking-indicator';
+            thinkingIndicator.innerHTML = `
+                <img src="/static/chatbot/images/chatbot-avatar.png" alt="Chatbot Avatar" class="avatar">
+                <div class="chatbot-message">
+                    <div class="typing-dots">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                </div>`;
+            chatOutput.appendChild(thinkingIndicator);
+            chatOutput.scrollTop = chatOutput.scrollHeight;
+
+            // Delay response to simulate typing
+            setTimeout(() => {
+                // Fetch the actual response
+                fetch('/chatbot/get-response/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken,
+                    },
+                    body: JSON.stringify({ message: messageToSend })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Remove the "thinking" indicator
+                    thinkingIndicator.remove();
+
+                    if (data.message) {
+                        if (data.expecting_keyword) {
+                            lastKeyword = '';  // Reset lastKeyword when bot asks for a new keyword
+                        } else if (lastKeyword === '' && data.message === "どんな手順を知りたいですか？") {
+                            // Don't save lastKeyword here, wait for user's response
+                        } else if (lastKeyword === '') {
+                            lastKeyword = messageToSend;  // Save the keyword
+                            saveChatHistory();  // Save chat history after getting the keyword
+                        }
+                        if (data.raw_html) {
+                            appendChatbotMessage(data.message, true);
+                        } else {
+                            appendChatbotMessage(data.message);
+                        }
+                    }
+
+                    if (data.show_buttons) {
+                        displayConfirmationButtons();
+                    } else if (data.expecting_keyword) {
+                        lastKeyword = '';
+                    } else if (lastKeyword === '' && data.message !== "どんな手順を知りたいですか？") {
                         lastKeyword = messageToSend;  // Save the keyword
-                        saveChatHistory();  // Save chat history after getting the keyword
                     }
-                    if (data.raw_html) {
-                        appendChatbotMessage(data.message, true);
-                    } else {
-                        appendChatbotMessage(data.message);
+
+                    if (data.timeline) {
+                        displayTimeline(data.timeline);
                     }
-                }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    thinkingIndicator.remove();
+                });
 
-                if (data.show_buttons) {
-                    displayConfirmationButtons();
-                } else if (data.expecting_keyword) {
-                    lastKeyword = '';
-                } else if (lastKeyword === '' && data.message !== "どんな手順を知りたいですか？") {
-                    lastKeyword = messageToSend;  // Save the keyword
-                }
-
-                if (data.timeline) {
-                    displayTimeline(data.timeline);
-                }
-            })
-            .catch(error => console.error('Error:', error));
-
-            resetSaveTimeout();
+                resetSaveTimeout();
+            }, 1200);  // Delay for 1.2 seconds
         }
     }
+
 
     function displayConfirmationButtons() {
         const buttonContainer = document.createElement('div');
