@@ -70,19 +70,21 @@ document.addEventListener('DOMContentLoaded', function() {
             const loadingContainer = appendLoadingMessage('AI分析中');
             await new Promise(resolve => setTimeout(resolve, 1500));
             loadingContainer.remove();
-            
+
             const csrftoken = getCookie('csrftoken');
 
-            fetch('/chatbot/get-response/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrftoken,
-                },
-                body: JSON.stringify({ message: messageToSend })
-            })
-            .then(response => response.json())
-            .then(async data => {
+            try {
+                const response = await fetch('/chatbot/get-response/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken,
+                    },
+                    body: JSON.stringify({ message: messageToSend })
+                });
+
+                const data = await response.json();
+
                 if (data.message) {
                     if (data.expecting_keyword) {
                         lastKeyword = '';
@@ -90,9 +92,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         // Don't save lastKeyword
                     } else if (lastKeyword === '') {
                         lastKeyword = messageToSend;
-                        saveChatHistory();
                     }
-                    
+
                     if (data.raw_html) {
                         appendChatbotMessage(data.message, true);
                     } else {
@@ -119,13 +120,22 @@ document.addEventListener('DOMContentLoaded', function() {
                     await new Promise(resolve => setTimeout(resolve, 1000));
                     loadingPrep.remove();
 
-                    // Display timeline
-                    displayTimeline(data.timeline);
-                }
-            })
-            .catch(error => console.error('Error:', error));
+                    // Display timeline and wait for it to complete
+                    await displayTimeline(data.timeline);
 
-            resetSaveTimeout();
+                    // Save chat history after timeline is fully displayed
+                    if (lastKeyword) {
+                        // Add small delay to ensure DOM is fully updated
+                        await new Promise(resolve => setTimeout(resolve, 100));
+                        await saveChatHistory();
+                    }
+                } else if (lastKeyword && !data.expecting_keyword) {
+                    // Save chat history for non-timeline responses
+                    await saveChatHistory();
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
         }
     }
 
@@ -160,7 +170,7 @@ document.addEventListener('DOMContentLoaded', function() {
         sendMessage(choice);
     }
 
-    function displayTimeline(timelineHtml) {
+    async function displayTimeline(timelineHtml) {
         const headerCardContainer = document.createElement('div');
         headerCardContainer.className = 'header-card-container';
 
@@ -178,6 +188,13 @@ document.addEventListener('DOMContentLoaded', function() {
         chatOutput.appendChild(timelineDiv);
 
         chatOutput.scrollTop = chatOutput.scrollHeight;
+
+        // Return a promise that resolves when the timeline is fully rendered
+        return new Promise(resolve => {
+            requestAnimationFrame(() => {
+                requestAnimationFrame(resolve);
+            });
+        });
     }
 
     function appendUserMessage(message) {
@@ -244,37 +261,40 @@ document.addEventListener('DOMContentLoaded', function() {
         return cookieValue;
     }
 
-    function saveChatHistory() {
-        const chatOutput = document.getElementById('chat-output').innerHTML;
+    async function saveChatHistory() {
+        // Get the latest chat output content after all updates
+        const chatOutputContent = document.getElementById('chat-output').innerHTML;
         const timestamp = new Date().toISOString();
 
-        fetch('/chatbot/save-history/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': getCookie('csrftoken'),
-            },
-            body: JSON.stringify({
-                chat_content: chatOutput,
-                timestamp: timestamp,
-                keyword: lastKeyword,
-                current_file: currentEditingFile
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
+        try {
+            const response = await fetch('/chatbot/save-history/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken'),
+                },
+                body: JSON.stringify({
+                    chat_content: chatOutputContent,
+                    timestamp: timestamp,
+                    keyword: lastKeyword,
+                    current_file: currentEditingFile
+                })
+            });
+
+            const data = await response.json();
             if (data.success) {
                 currentEditingFile = data.filename;
-                updateChatHistoryList();
+                await updateChatHistoryList();
             }
-        })
-        .catch(error => console.error('Error:', error));
+        } catch (error) {
+            console.error('Error:', error);
+        }
     }
 
-    function updateChatHistoryList() {
-        fetch('/chatbot/get-history/')
-        .then(response => response.json())
-        .then(data => {
+    async function updateChatHistoryList() {
+        try {
+            const response = await fetch('/chatbot/get-history/');
+            const data = await response.json();
             chatHistoryList.innerHTML = '';
             const groups = {};
 
@@ -303,18 +323,26 @@ document.addEventListener('DOMContentLoaded', function() {
                 groupElement.appendChild(groupList);
                 chatHistoryList.appendChild(groupElement);
             }
-        })
-        .catch(error => console.error('Error updating chat history:', error));
+        } catch (error) {
+            console.error('Error updating chat history:', error);
+        }
     }
 
-    function loadChatHistory(filename) {
-        fetch(`/chatbot/load-history/${filename}/`)
-        .then(response => response.text())
-        .then(html => {
+    async function loadChatHistory(filename) {
+        try {
+            const response = await fetch(`/chatbot/load-history/${filename}/`);
+            const html = await response.text();
             document.getElementById('chat-output').innerHTML = html;
             currentEditingFile = filename;
-        })
-        .catch(error => console.error('Error:', error));
+
+            // Re-attach event listeners to buttons if they exist
+            const yesButton = document.querySelector('.yes-button');
+            const noButton = document.querySelector('.no-button');
+            if (yesButton) yesButton.addEventListener('click', () => handleButtonClick('はい'));
+            if (noButton) noButton.addEventListener('click', () => handleButtonClick('いいえ'));
+        } catch (error) {
+            console.error('Error:', error);
+        }
     }
 
     function resetSaveTimeout() {

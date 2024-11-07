@@ -132,12 +132,16 @@ def get_chat_response(request):
                         if log_info_response.status_code == 200
                         else {}
                     )
+                    # Get the questions from session
+                    questions = request.session.get("questions", [])
+                    # Calculate total operations (number of questions + 1)
+                    total_operations = len(questions) + 1
 
                     # Create the header card with log info
                     header_card = f"""
                     <div class="timeline-header-card">
                         <h3>操作手順概要</h3>
-                        <p><strong>操作数:</strong> {log_info.get('total_operations', 'N/A')}</p>
+                        <p><strong>操作数:</strong> {total_operations}</p>
                         <p><strong>手順の内容:</strong> {log_info.get('procedure_content', 'N/A')}</p>
                     </div>
                     """

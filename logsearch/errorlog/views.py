@@ -566,20 +566,16 @@ def error_detail(request, error_type):
 
 
 def are_actions_similar(action1, action2):
-    # Extract the parts inside 「」
-    parts1 = re.findall(r"「(.+?)」", action1)
-    parts2 = re.findall(r"「(.+?)」", action2)
+    # Function to mask content inside 「」with ****
+    def mask_content(text):
+        return re.sub(r"「[^」]+」", "「****」", text)
 
-    # If the number of parts is different, they are not similar
-    if len(parts1) != len(parts2):
-        return False
+    # Mask the content in both actions
+    masked_action1 = mask_content(action1)
+    masked_action2 = mask_content(action2)
 
-    # Compare all parts except the second one (index 1)
-    for i in range(len(parts1)):
-        if i != 1 and parts1[i] != parts2[i]:
-            return False
-
-    return True
+    # Compare the masked actions
+    return masked_action1 == masked_action2
 
 
 def error_action_statistics(request):
