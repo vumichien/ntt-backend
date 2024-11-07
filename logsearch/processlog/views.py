@@ -513,7 +513,9 @@ def get_log_info(request, content):
 def get_history_inputs(request):
     # Lấy danh sách các `master_log_id` từ request và `input_ids` từ `answers`
     selected_master_log_ids = request.data.get("selected_master_log_ids", [])
-    input_ids = set(request.data.get("input_ids", []))  # Chỉ lấy input_id có trong answers
+    input_ids = set(
+        request.data.get("input_ids", [])
+    )  # Chỉ lấy input_id có trong answers
     inputs_summary = []
 
     # Duyệt qua từng `master_log_id` và lấy dữ liệu từ `history_file`
@@ -527,7 +529,9 @@ def get_history_inputs(request):
                     with open(history_file_path, "r", encoding="utf-8") as file:
                         reader = csv.DictReader(file)
                         file_inputs = {"filename": master_log.filename, "inputs": []}
-                        fields_before_button = []  # Danh sách các `field_name` trước khi gặp nút nhấn
+                        fields_before_button = (
+                            []
+                        )  # Danh sách các `field_name` trước khi gặp nút nhấn
 
                         for row in reader:
                             input_id = row.get("input_id")
@@ -543,15 +547,20 @@ def get_history_inputs(request):
                                     {
                                         "check_label": f"{button_label}前のチェック項目",
                                         "fields": [
-                                            field for field in fields_before_button
-                                            if field in input_ids  # Lọc lại chỉ các trường trong input_ids
+                                            field
+                                            for field in fields_before_button
+                                            if field
+                                            in input_ids  # Lọc lại chỉ các trường trong input_ids
                                         ],
                                     }
                                 )
                                 fields_before_button.clear()  # Xóa các trường sau khi thêm
                             else:
                                 # Nếu không phải nút nhấn, kiểm tra và thêm các giá trị input vào `fields_before_button`
-                                match = re.search(r"「(.*?)」へ「(.*?)」を(入力|選択)する", description)
+                                match = re.search(
+                                    r"「(.*?)」へ「(.*?)」を(入力|選択)する",
+                                    description,
+                                )
                                 if match and input_id in input_ids:
                                     field_name = match.group(1)  # Tên trường
                                     input_value = match.group(2)  # Giá trị input
@@ -563,7 +572,9 @@ def get_history_inputs(request):
                                             "input_value": input_value,
                                         }
                                     )
-                                    fields_before_button.append(input_id)  # Thêm input_id vào danh sách theo dõi
+                                    fields_before_button.append(
+                                        input_id
+                                    )  # Thêm input_id vào danh sách theo dõi
 
                         inputs_summary.append(file_inputs)
 
@@ -572,6 +583,7 @@ def get_history_inputs(request):
 
     # Trả về kết quả dưới dạng JSON
     return Response(inputs_summary)
+
 
 @api_view(["GET"])
 def get_manual_info(request, content):
